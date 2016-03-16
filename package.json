@@ -1,0 +1,20 @@
+{
+  "name": "wiki-security-social",
+  "version": "0.0.1",
+  "description": "Security plugin for Federated Wiki, using passport social plugins",
+  "author": "Paul Rodwell <paul.rodwell@btinternet.com> (http://rodwell.me)",
+  "license": "MIT",
+  "dependencies": {
+    "coffee-script": "1.10",
+    "passport": "^0.3.2",
+    "passport-twitter": "*",
+    "qs": "6.1"
+  },
+  "devDependencies": {
+    "coffeeify": "*",
+    "grunt": "0.4",
+    "grunt-browserify": "~4",
+    "grunt-contrib-watch": "0.6",
+    "grunt-git-authors": "~3"
+  }
+}

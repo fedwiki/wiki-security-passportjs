@@ -1,3 +1,7 @@
-#show-security-dialog {
+#show-security-dialog, #logout{
   color: gold;
+}
+
+#isOwner {
+  color: green;
 }

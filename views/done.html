@@ -3,8 +3,11 @@
 <head>
   <title>Federated Wiki: Sign-on</title>
   <link id='favicon' href='/favicon.png' rel='icon' type='image/png'>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
   <link rel="stylesheet" href="/security/style.css">
+  <script language='javascript' type='text/javascript'>
+    window.opener.plugins.security.update_footer("{{{owner}}}", true)
+    window.close()
+  </script>
 
 </head>
 <body>
@@ -12,9 +15,8 @@
     <img src="/favicon.png">
     {{title}}
   </header>
-  <div class="schemes">
-    <p>Sign-on using:</p>
-    {{{schemes}}}
+  <div>
+    {{{authMessage}}}
   </div>
 </body>
 </html>

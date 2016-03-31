@@ -28,17 +28,26 @@ module.exports = exports = (log, loga, argv) ->
 #### Private stuff ####
 
   owner = ''
+  ownerName = ''
   User = {}
 
   admin = argv.admin
 
-  statusDir = argv.statusDir
+  statusDir = argv.status
 
-  idFile = argv.id
+  console.log "statusDir: ", statusDir
+
+  ownerFile = path.join(statusDir, "owner.json")
+
+  personaIDFile = argv.id
+  usingPersona = false
 
   ids = {}
 
   schemes = {}
+
+  # Mozilla Persona service closes on
+  personaEnd = new Date('2016-11-30')
 
 
   #### Public stuff ####
@@ -47,22 +56,36 @@ module.exports = exports = (log, loga, argv) ->
   # if it is return the owner.
 
   security.retrieveOwner = (cb) ->
-    fs.exists idFile, (exists) ->
+    fs.exists personaIDFile, (exists) ->
       if exists
-        fs.readFile(idFile, (err, data) ->
+        fs.readFile(personaIDFile, (err, data) ->
           if err then return cb err
           owner += data
+          usingPersona = true
           cb())
       else
-        owner = ''
-        cb()
+        fs.exists ownerFile, (exists) ->
+          if exists
+            fs.readFile(ownerFile, (err, data) ->
+              if err then return cb err
+              owner += data
+              cb())
+          else
+            owner = ''
+            cb()
 
   security.getOwner = getOwner = ->
-    if ~owner.indexOf '@'
-      ownerName = owner.substr(0, owner.indexOf('@'))
+    if usingPersona
+      if ~owner.indexOf '@'
+        ownerName = owner.substr(0, owner.indexOf('@'))
+      else
+        ownerName = owner
+      ownerName = ownerName.split('.').join(' ')
     else
-      ownerName = owner
-    ownerName = ownerName.split('.').join(' ')
+      if owner.name?
+        ownerName = ''
+      else
+        ownerName = owner.name
     ownerName
 
   security.setOwner = setOwner = (id, cb) ->
@@ -70,19 +93,22 @@ module.exports = exports = (log, loga, argv) ->
       if !exists
         fs.writeFile(idFile, id, (err) ->
           if err then return cb err
-          console.log "Claining site for #{id}"
-          owner = # IDEA:
+          console.log "Claiming site for #{id}"
+          owner = id
           cb())
       else
         cb()
 
   security.getUser = (req) ->
-    if req.session.email
-      return req.session.email
+    if req.session.passport
+      if req.session.passport.user
+        return req.session.passport.user
+      else
+        return ''
     else
       return ''
 
-  security.isAuthorized = (req) ->
+  security.isAuthorized = isAuthorized = (req) ->
     if [req.session.email, ''].indexOf(owner) > -1
       return true
     else
@@ -97,16 +123,7 @@ module.exports = exports = (log, loga, argv) ->
       return false
 
   security.login = (updateOwner) ->
-
-
-
-
-
-
-
-
-
-
+    console.log "Login...."
 
   security.logout = () ->
     (req, res) ->
@@ -155,8 +172,13 @@ module.exports = exports = (log, loga, argv) ->
         consumerSecret: ids['twitter'].consumerSecret
         callbackURL: '/auth/twitter/callback'
         }, (accessToken, refreshToken, profile, cb) ->
-          console.log "Profile: ", profile
-          cb(null, profile)))
+          user = {
+            "provider": 'twitter',
+            "id": profile.id,
+            "username": profile.username,
+            "displayName": profile.displayName
+          }
+          cb(null, user)))
 
     ###
     if argv.google_clientID? and argv.google_clientSecret?
@@ -190,9 +212,9 @@ module.exports = exports = (log, loga, argv) ->
     # Twitter
     app.get('/auth/twitter', passport.authenticate('twitter'), (req, res) -> )
     app.get('/auth/twitter/callback',
-      passport.authenticate('twitter', {failureRedirect: '/'}), (req, res) ->
-        console.log 'twitter logged in!!!!'
-        res.send('twitter logged in'))
+      passport.authenticate('twitter', { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
+
+
 
 
     ### Google
@@ -212,10 +234,31 @@ module.exports = exports = (log, loga, argv) ->
           "Wiki Site Owner Sign-on"
         else
           "Sign-on to claim Wiki site"
-      schemes: "<a href='/auth/twitter'><i class='fa fa-twitter'></i></a>"
-
+        schemes: "<a href='/auth/twitter'><i class='fa fa-twitter fa-2x fa-fw'></i></a>"
       }
       res.render(path.join(__dirname, '..', 'views', 'securityDialog.html'), info)
+
+    app.get '/auth/loginDone', (req,res) ->
+      if owner
+        # do whatever we need to do if the site is already owned
+      else
+        # site is not owned, so we should claim it
+
+      info = {
+        title: if owner
+          "Wiki Site Owner Sign-on"
+        else
+          "Sign-on to claim Wiki site"
+        owner: getOwner
+        authMessage: "You are now logged in..."
+      }
+      res.render(path.join(__dirname, '..', 'views', 'done.html'), info)
+
+    app.get '/logout', (req, res) ->
+      console.log 'Logout...'
+      req.logout()
+      res.send("OK")
+
 
 
 

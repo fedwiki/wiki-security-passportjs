@@ -13,30 +13,40 @@
 
 ###
 
-dialogCallback = (msg) ->
-  alert('Dialog callback: ' + msg)
-
-update_footer = (owner, authUser) ->
+update_footer = (ownerName, isAuthenticated, isOwner) ->
   # we update the owner and the login state in the footer, and
   # populate the security dialog
 
-  if owner
-    $('footer > #site-owner').html("Site Owned by: <span id='site-owner' style='text-transform:capitalize;'>#{owner}</span>")
+  if ownerName
+    $('footer > #site-owner').html("Site Owned by: <span id='site-owner' style='text-transform:capitalize;'>#{ownerName}</span>")
 
   $('footer > #security').empty()
 
-  if authUser is true
-    $('footer > #security').append "<a href='#' id='show-security-dialog' class='footer-item' title='Sign-out'><i class='fa fa-unlock fa-lg fa-fw'></i></a>"
+  if isAuthenticated
+    $('footer > #security').append "<a href='#' id='logout' class='footer-item' title='Sign-out'><i class='fa fa-unlock fa-lg fa-fw'></i></a>"
+    $('footer > #security > #logout').click (e) ->
+      e.preventDefault()
+      myInit = {
+        method: 'GET'
+        cache: 'no-cache'
+        mode: 'same-origin'
+        credentials: 'include'
+      }
+      fetch '/logout', myInit
+      .then (response) ->
+        if response.ok
+          isAuthenticated = false
+          isOwner = false
+          user = ''
+          update_footer ownerName, isAuthenticated, isOwner
+        else
+          console.log 'logout failed: ', response
   else
     $('footer > #security').append "<a href='#' id='show-security-dialog' class='footer-item' title='Sign-on'><i class='fa fa-lock fa-lg fa-fw'></i></a>"
-
-  $('footer > #security')
-    .delegate '#show-security-dialog', 'click', (e) ->
+    $('footer > #security > #show-security-dialog').click (e) ->
       e.preventDefault()
       securityDialog = window.open("/auth/loginDialog", "_blank", "menubar=no, location=no, chrome=yes, centerscreen")
-      
       securityDialog.window.focus()
-
 
 
 
@@ -47,8 +57,6 @@ setup = (user) ->
   if (!$("link[href='/security/style.css']").length)
     $('<link rel="stylesheet" href="/security/style.css">').appendTo("head")
 
+  update_footer ownerName, isAuthenticated, isOwner
 
-
-  update_footer owner, authUser
-
-window.plugins.security = {setup}
+window.plugins.security = {setup, update_footer}

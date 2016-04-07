@@ -248,7 +248,7 @@ module.exports = exports = (log, loga, argv) ->
           "Wiki Site Owner Sign-on"
         else
           "Sign-on to claim Wiki site"
-        schemes: "<a href='/auth/twitter'><i class='fa fa-twitter fa-2x fa-fw'></i></a>"
+        schemes: "<a href='/auth/twitter' class='scheme-button twitter-button'><span>Twitter</span></a>"
       }
       res.render(path.join(__dirname, '..', 'views', 'securityDialog.html'), info)
 

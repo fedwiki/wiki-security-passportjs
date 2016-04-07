@@ -5,7 +5,10 @@
   <link id='favicon' href='/favicon.png' rel='icon' type='image/png'>
   <link rel="stylesheet" href="/security/style.css">
   <script language='javascript' type='text/javascript'>
-    window.opener.plugins.security.update_footer("{{{owner}}}", true)
+    if (window.opener.isClaimed == false)
+      window.opener.plugins.security.claim_wiki()
+    else
+      window.opener.plugins.security.update_footer(window.opener.ownerName, true)
     window.close()
   </script>
 

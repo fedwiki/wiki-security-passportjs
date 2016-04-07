@@ -13,6 +13,29 @@
 
 ###
 
+claim_wiki = () ->
+  # we want to initiate a claim on a wiki
+  #
+  # this is don't after login, so that login can be performed at wiki TLD
+  if !isClaimed
+    # only try and claim if we think site is unclaimed
+    myInit = {
+      method: 'GET'
+      cache: 'no-cache'
+      mode: 'same-origin'
+      credentials: 'include'
+    }
+    fetch '/auth/claim-wiki', myInit
+    .then (response) ->
+      if response.ok
+        response.json().then (json) ->
+          ownerName = json.ownerName
+          update_footer ownerName, true, true
+          console.log 'owner: ', json.ownerName, ' : ', ownerName
+      else
+        console.log 'Attempt to claim site failed', response
+
+
 update_footer = (ownerName, isAuthenticated, isOwner) ->
   # we update the owner and the login state in the footer, and
   # populate the security dialog
@@ -42,10 +65,17 @@ update_footer = (ownerName, isAuthenticated, isOwner) ->
         else
           console.log 'logout failed: ', response
   else
-    $('footer > #security').append "<a href='#' id='show-security-dialog' class='footer-item' title='Sign-on'><i class='fa fa-lock fa-lg fa-fw'></i></a>"
+    if !isClaimed
+      signonTitle = 'Claim this Wiki'
+    else
+      signonTitle = 'Sign-on'
+    $('footer > #security').append "<a href='#' id='show-security-dialog' class='footer-item' title='#{signonTitle}'><i class='fa fa-lock fa-lg fa-fw'></i></a>"
     $('footer > #security > #show-security-dialog').click (e) ->
       e.preventDefault()
-      securityDialog = window.open("/auth/loginDialog", "_blank", "menubar=no, location=no, chrome=yes, centerscreen")
+      securityDialog = window.open(
+        "/auth/loginDialog",
+        "_blank",
+        "width=700, height=375, menubar=no, location=no, chrome=yes, centerscreen")
       securityDialog.window.focus()
 
 
@@ -59,4 +89,4 @@ setup = (user) ->
 
   update_footer ownerName, isAuthenticated, isOwner
 
-window.plugins.security = {setup, update_footer}
+window.plugins.security = {setup, claim_wiki, update_footer}

@@ -5,10 +5,6 @@
  * Licensed under the MIT license.
  * https://github.com/fedwiki/wiki-security-social/blob/master/LICENSE.txt
 ###
-# **Persona : security.coffee**
-# Module for Persona (BrowserID) based security.
-#
-# This module is based on the previously built-in security.
 
 #### Requires ####
 fs = require 'fs'
@@ -29,7 +25,8 @@ module.exports = exports = (log, loga, argv) ->
 
   owner = ''
   ownerName = ''
-  User = {}
+  user = {}
+  wikiName = argv.url
 
   admin = argv.admin
 
@@ -37,7 +34,7 @@ module.exports = exports = (log, loga, argv) ->
 
   console.log "statusDir: ", statusDir
 
-  ownerFile = path.join(statusDir, "owner.json")
+  idFile = path.join(statusDir, "owner.json")
 
   personaIDFile = argv.id
   usingPersona = false
@@ -64,11 +61,11 @@ module.exports = exports = (log, loga, argv) ->
           usingPersona = true
           cb())
       else
-        fs.exists ownerFile, (exists) ->
+        fs.exists idFile, (exists) ->
           if exists
-            fs.readFile(ownerFile, (err, data) ->
+            fs.readFile(idFile, (err, data) ->
               if err then return cb err
-              owner += data
+              owner = JSON.parse(data)
               cb())
           else
             owner = ''
@@ -82,22 +79,22 @@ module.exports = exports = (log, loga, argv) ->
         ownerName = owner
       ownerName = ownerName.split('.').join(' ')
     else
-      if owner.name?
+      if !owner.name?
         ownerName = ''
       else
         ownerName = owner.name
     ownerName
 
   security.setOwner = setOwner = (id, cb) ->
-    fs.exists idfile, (exists) ->
+    fs.exists idFile, (exists) ->
       if !exists
         fs.writeFile(idFile, id, (err) ->
           if err then return cb err
-          console.log "Claiming site for #{id}"
+          console.log "Claiming wiki #{wikiName} for #{id}"
           owner = id
           cb())
       else
-        cb()
+        cb('Already Claimed')
 
   security.getUser = (req) ->
     if req.session.passport
@@ -109,18 +106,34 @@ module.exports = exports = (log, loga, argv) ->
       return ''
 
   security.isAuthorized = isAuthorized = (req) ->
-    if [req.session.email, ''].indexOf(owner) > -1
+    if usingPersona
+      # not added legacy support yet, so...
+      return false
+    else if owner is ''
+      # site not claimed?
       return true
     else
-      return false
+      authorized = false
+      try
+        authorized = switch req.session.passport.user.provider
+          when "twitter"
+            if owner.twitter.id is req.session.passport.user.id
+              true
+      return authorized
+
 
   security.isAdmin = (req) ->
-    if !(req.session.email? or admin?)
+    if usingPersona
+      # not added legacy support yet, so...
       return false
-    if req.session.email is admin
-      return true
     else
-      return false
+      admin = false
+      try
+        admin = switch req.session.passport.user.provider
+          when "twitter"
+            if admin is req.session.passport.user.id
+              true
+      return admin
 
   security.login = (updateOwner) ->
     console.log "Login...."
@@ -194,7 +207,6 @@ module.exports = exports = (log, loga, argv) ->
         clientSecret: ids['google'].clientSecret
         callbackURL: 'http://localhost:3000/auth/google/callback'
         }, (accessToken, refreshToken, profile, cb) ->
-          console.log "Profile: ", profile
           cb(null, profile)))
     ###
 
@@ -230,6 +242,8 @@ module.exports = exports = (log, loga, argv) ->
     app.get '/auth/loginDialog', (req, res) ->
 
       info = {
+        wikiName: req.hostname
+        wikiHostName: "a federated wiki site"
         title: if owner
           "Wiki Site Owner Sign-on"
         else
@@ -238,12 +252,7 @@ module.exports = exports = (log, loga, argv) ->
       }
       res.render(path.join(__dirname, '..', 'views', 'securityDialog.html'), info)
 
-    app.get '/auth/loginDone', (req,res) ->
-      if owner
-        # do whatever we need to do if the site is already owned
-      else
-        # site is not owned, so we should claim it
-
+    app.get '/auth/loginDone', (req, res) ->
       info = {
         title: if owner
           "Wiki Site Owner Sign-on"
@@ -253,6 +262,31 @@ module.exports = exports = (log, loga, argv) ->
         authMessage: "You are now logged in..."
       }
       res.render(path.join(__dirname, '..', 'views', 'done.html'), info)
+
+    app.get '/auth/claim-wiki', (req, res) ->
+      if owner
+        console.log 'Claim Request Ignored: Wiki already has owner'
+        res.sendStatus(403)
+      else
+        user = req.session.passport.user
+        id = switch user.provider
+          when "twitter" then {
+            name: user.displayName
+            twitter: {
+              id: user.id
+              username: user.username
+            }
+          }
+        console.log 'id: ', id
+        setOwner JSON.stringify(id), (err) ->
+          if err
+            console.log 'Failed to claim wiki ', req.hostname, ' for ', id
+            res.sendStatus(500)
+          res.json({
+            ownerName: id.name
+            })
+
+
 
     app.get '/logout', (req, res) ->
       console.log 'Logout...'

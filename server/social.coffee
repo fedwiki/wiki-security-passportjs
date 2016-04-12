@@ -242,13 +242,19 @@ module.exports = exports = (log, loga, argv) ->
 
     app.get '/auth/loginDialog', (req, res) ->
 
+      console.log 'owner: ', owner
+
       info = {
         wikiName: req.hostname
         wikiHostName: "a federated wiki site"
         title: if owner
-          "Wiki Site Owner Sign-on"
+          "Federated Wiki: Site Owner Sign-on"
         else
-          "Sign-on to claim Wiki site"
+          "Federated Wiki: Claim Wiki Site"
+        loginText: if owner
+          "Sign in to"
+        else
+          "Claim wiki"
         schemes: "<a href='/auth/twitter' class='scheme-button twitter-button'><span>Twitter</span></a>"
       }
       res.render(path.join(__dirname, '..', 'views', 'securityDialog.html'), info)

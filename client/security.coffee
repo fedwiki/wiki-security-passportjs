@@ -68,7 +68,7 @@ update_footer = (ownerName, isAuthenticated, isOwner) ->
     if !isClaimed
       signonTitle = 'Claim this Wiki'
     else
-      signonTitle = 'Sign-on'
+      signonTitle = 'Wiki Owner Sign-on'
     $('footer > #security').append "<a href='#' id='show-security-dialog' class='footer-item' title='#{signonTitle}'><i class='fa fa-lock fa-lg fa-fw'></i></a>"
     $('footer > #security > #show-security-dialog').click (e) ->
       e.preventDefault()

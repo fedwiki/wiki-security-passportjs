@@ -88,10 +88,11 @@ module.exports = exports = (log, loga, argv) ->
   security.setOwner = setOwner = (id, cb) ->
     fs.exists idFile, (exists) ->
       if !exists
-        fs.writeFile(idFile, id, (err) ->
+        fs.writeFile(idFile, JSON.stringify(id), (err) ->
           if err then return cb err
           console.log "Claiming wiki #{wikiName} for #{id}"
           owner = id
+          ownerName = owner.name
           cb())
       else
         cb('Already Claimed')
@@ -277,11 +278,12 @@ module.exports = exports = (log, loga, argv) ->
               username: user.username
             }
           }
-        console.log 'id: ', id
-        setOwner JSON.stringify(id), (err) ->
+
+        setOwner id, (err) ->
           if err
             console.log 'Failed to claim wiki ', req.hostname, ' for ', id
             res.sendStatus(500)
+          updateOwner getOwner()
           res.json({
             ownerName: id.name
             })

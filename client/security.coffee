@@ -13,6 +13,8 @@
 
 ###
 
+settings = {}
+
 claim_wiki = () ->
   # we want to initiate a claim on a wiki
   #
@@ -31,7 +33,6 @@ claim_wiki = () ->
         response.json().then (json) ->
           ownerName = json.ownerName
           update_footer ownerName, true, true
-          console.log 'owner: ', json.ownerName, ' : ', ownerName
       else
         console.log 'Attempt to claim site failed', response
 
@@ -72,21 +73,53 @@ update_footer = (ownerName, isAuthenticated, isOwner) ->
     $('footer > #security').append "<a href='#' id='show-security-dialog' class='footer-item' title='#{signonTitle}'><i class='fa fa-lock fa-lg fa-fw'></i></a>"
     $('footer > #security > #show-security-dialog').click (e) ->
       e.preventDefault()
-      securityDialog = window.open(
-        "/auth/loginDialog",
-        "_blank",
-        "width=700, height=375, menubar=no, location=no, chrome=yes, centerscreen")
-      securityDialog.window.focus()
+
+      w = WinChan.open({
+        url: settings.dialogURL
+        relay_url: settings.relayURL
+        window_features: "menubar=0, location=0, resizable=0, scrollbars=0, status=0, dialog=1, width=700, height=375"
+        params: {}
+        }, (err, r) ->
+          if err
+            console.log err
+          else if !isClaimed
+            claim_wiki()
+          else
+            update_footer ownerName, true)
 
 
 
 setup = (user) ->
 
+  # we will replace font-awesome with a small number of svg icons at a later date...
   if (!$("link[href='https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css']").length)
     $('<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">').appendTo("head")
+  wiki.getScript '/security/winchan.js'
   if (!$("link[href='/security/style.css']").length)
     $('<link rel="stylesheet" href="/security/style.css">').appendTo("head")
+  myInit = {
+    method: 'GET'
+    cache: 'no-cache'
+    mode: 'same-origin'
+  }
+  fetch '/auth/client-settings.json', myInit
+  .then (response) ->
+    if response.ok
+      response.json().then (json) ->
+        settings = json
+        if settings.useHttps
+          dialogProtocol = 'https:'
+        else
+          dialogProtocol = window.location.protocol
+        if settings.wikiHost
+          dialogHost = settings.wikiHost
+        else
+          dialogHost = window.location.host
+        settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/loginDialog'
+        settings.relayURL = dialogProtocol + '//' + dialogHost + '/auth/relay.html'
 
-  update_footer ownerName, isAuthenticated, isOwner
+        update_footer ownerName, isAuthenticated, isOwner
+    else
+      console.log 'Unable to fetch client settings: ', response
 
 window.plugins.security = {setup, claim_wiki, update_footer}

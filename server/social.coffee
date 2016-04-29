@@ -13,6 +13,10 @@ path = require 'path'
 https = require 'https'
 qs = require 'qs'
 
+url = require 'url'
+
+_ = require('lodash')
+
 passport = require 'passport'
 
 
@@ -27,6 +31,7 @@ module.exports = exports = (log, loga, argv) ->
   ownerName = ''
   user = {}
   wikiName = argv.url
+  wikiHost = argv.wiki_domain
 
   admin = argv.admin
 
@@ -39,9 +44,19 @@ module.exports = exports = (log, loga, argv) ->
   personaIDFile = argv.id
   usingPersona = false
 
-  ids = {}
+  if argv.security_useHttps
+    useHttps = true
+    callbackProtocol = "https:"
+  else
+    useHttps = false
+    callbackProtocol = url.parse(argv.url).protocol
 
-  schemes = {}
+  if wikiHost
+    callbackHost = wikiHost
+  else
+    callbackHost = url.parse(argv.url).host
+
+  ids = []
 
   # Mozilla Persona service closes on
   personaEnd = new Date('2016-11-30')
@@ -114,13 +129,12 @@ module.exports = exports = (log, loga, argv) ->
       # site not claimed?
       return true
     else
-      authorized = false
       try
-        authorized = switch req.session.passport.user.provider
-          when "twitter"
-            if owner.twitter.id is req.session.passport.user.id
-              true
-      return authorized
+        if owner[req.session.passport.user.provider].id is req.session.passport.user.id
+          return true
+        else
+          return false
+      return false
 
 
   security.isAdmin = (req) ->
@@ -128,13 +142,12 @@ module.exports = exports = (log, loga, argv) ->
       # not added legacy support yet, so...
       return false
     else
-      admin = false
       try
-        admin = switch req.session.passport.user.provider
-          when "twitter"
-            if admin is req.session.passport.user.id
-              true
-      return admin
+        if admin is req.session.passport.user.id
+          return true
+        else
+          return false
+      return false
 
   security.login = (updateOwner) ->
     console.log "Login...."
@@ -151,111 +164,115 @@ module.exports = exports = (log, loga, argv) ->
     passport.deserializeUser = (obj, req, done) ->
       done(null, obj)
 
-
-    ###
+    # Github Strategy
     if argv.github_clientID? and argv.github_clientSecret?
-      github = {}
-      github['clientID'] = argv.github_clientID
-      github['clientSecret'] = argv.github_clientSecret
-      ids['github'] = github
-
+      ids.push('github')
       GithubStrategy = require('passport-github').Strategy
 
       passport.use(new GithubStrategy({
-        clientID: ids['github'].clientID
-        clientSecret: ids['github'].clientSecret
-        # this is not going to work - callback must equal that specified won github
-        # when the application was setup - it can't be dynamic....
-        callbackURL: 'http://localhost:3000/auth/github/callback'
-        }, (accessToken, refreshToken, profile, cb) ->
-          User.findOrCreate({githubID: profile.id}, (err, user) ->
-            return cb(err, user))))
-    ###
-
-    if argv.twitter_consumerKey? and argv.twitter_consumerSecret?
-      schemes['twitter'] = true
-      twitter = {}
-      twitter['consumerKey'] = argv.twitter_consumerKey
-      twitter['consumerSecret'] = argv.twitter_consumerSecret
-      ids['twitter'] = twitter
-
-      TwitterStrategy = require('passport-twitter').Strategy
-
-      passport.use(new TwitterStrategy({
-        consumerKey: ids['twitter'].consumerKey
-        consumerSecret: ids['twitter'].consumerSecret
-        callbackURL: '/auth/twitter/callback'
+        clientID: argv.github_clientID
+        clientSecret: argv.github_clientSecret
+        scope: 'user:emails'
+        # callbackURL is optional, and if it exists must match that given in
+        # the OAuth application settings - so we don't specify it.
         }, (accessToken, refreshToken, profile, cb) ->
           user = {
-            "provider": 'twitter',
-            "id": profile.id,
-            "username": profile.username,
-            "displayName": profile.displayName
+            provider: 'github',
+            id: profile.id
+            username: profile.username
+            displayName: profile.displayName
+            email: profile.emails[0].value
           }
           cb(null, user)))
 
-    ###
-    if argv.google_clientID? and argv.google_clientSecret?
-      google = {}
-      google['clientID'] = argv.google_clientID
-      google['clientSecret'] = argv.google_clientSecret
-      ids['google'] = google
+    # Twitter Strategy
+    if argv.twitter_consumerKey? and argv.twitter_consumerSecret?
+      ids.push('twitter')
+      TwitterStrategy = require('passport-twitter').Strategy
 
+      passport.use(new TwitterStrategy({
+        consumerKey: argv.twitter_consumerKey
+        consumerSecret: argv.twitter_consumerSecret
+        callbackURL: callbackProtocol + '//' + callbackHost + '/auth/twitter/callback'
+        }, (accessToken, refreshToken, profile, cb) ->
+          user = {
+            provider: 'twitter',
+            id: profile.id,
+            username: profile.username,
+            displayName: profile.displayName
+          }
+          cb(null, user)))
+
+    # Google Strategy
+    if argv.google_clientID? and argv.google_clientSecret?
+      ids.push('google')
       GoogleStrategy = require('passport-google-oauth20').Strategy
 
       passport.use(new GoogleStrategy({
-        clientID: ids['google'].clientID
-        clientSecret: ids['google'].clientSecret
-        callbackURL: 'http://localhost:3000/auth/google/callback'
+        clientID: argv.google_clientID
+        clientSecret: argv.google_clientSecret
+        callbackURL: callbackProtocol + '//' + callbackHost + '/auth/google/callback'
         }, (accessToken, refreshToken, profile, cb) ->
+          user = {
+            provider: "google"
+            id: profile.id
+            displayName: profile.displayName
+            emails: profile.emails
+          }
           cb(null, profile)))
-    ###
+
 
     app.use(passport.initialize())
     app.use(passport.session())
 
-    ### Github
-    app.get('/auth/github', passport.authenticate('github'), (req, res) -> )
+    # Github
+    app.get('/auth/github', passport.authenticate('github', {scope: 'user:email'}), (req, res) -> )
     app.get('/auth/github/callback',
-      passport.authenticate('github', { failureRedirect: '/'}), (req, res) ->
-        # do what ever happens on login
-      )
-    ###
+      passport.authenticate('github', { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
 
     # Twitter
     app.get('/auth/twitter', passport.authenticate('twitter'), (req, res) -> )
     app.get('/auth/twitter/callback',
       passport.authenticate('twitter', { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
 
-
-
-
-    ### Google
+    # Google
     app.get('/auth/google', passport.authenticate('google', { scope: [
       'https://www.googleapis.com/auth/plus.profile.emails.read'
       ]}))
     app.get('/auth/google/callback',
-      passport.authenticate('google', {failureRedirect: '/'}), (req, res) ->
-        console.log 'google logged in!!!!'
-        res.redirect('/view/welcome-visitors'))
-    ###
+      passport.authenticate('google', { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
+
+
+    app.get '/auth/client-settings.json', (req, res) ->
+      # the client needs some information to configure itself
+      settings = {
+        useHttps: useHttps
+      }
+      if wikiHost
+        settings.wikiHost = wikiHost
+      res.json settings
 
     app.get '/auth/loginDialog', (req, res) ->
+      referer = req.headers.referer
+      console.log "logging into: ", url.parse(referer).hostname
 
-      console.log 'owner: ', owner
+      schemeButtons = []
+      _(ids).forEach (scheme) ->
+        console.log "Scheme: ", scheme
+        switch scheme
+          when "twitter" then schemeButtons.push({button: "<a href='/auth/twitter' class='scheme-button twitter-button'><span>Twitter</span></a>"})
+          when "github" then schemeButtons.push({button: "<a href='/auth/github' class='scheme-button github-button'><span>Github</span></a>"})
+          when "google" then schemeButtons.push({button: "<a href='/auth/google' class='scheme-button google-button'><span>Google</span></a>"})
 
       info = {
-        wikiName: req.hostname
-        wikiHostName: "a federated wiki site"
-        title: if owner
-          "Federated Wiki: Site Owner Sign-on"
+        wikiName: url.parse(referer).hostname
+        wikiHostName: if wikiHost
+          "part of " + req.hostname + " wiki farm"
         else
-          "Federated Wiki: Claim Wiki Site"
-        loginText: if owner
-          "Sign in to"
-        else
-          "Claim wiki"
-        schemes: "<a href='/auth/twitter' class='scheme-button twitter-button'><span>Twitter</span></a>"
+          "a federated wiki site"
+        title: "Federated Wiki: Site Owner Sign-on"
+        loginText: "Sign in to"
+        schemes: schemeButtons
       }
       res.render(path.join(__dirname, '..', 'views', 'securityDialog.html'), info)
 
@@ -276,6 +293,7 @@ module.exports = exports = (log, loga, argv) ->
         res.sendStatus(403)
       else
         user = req.session.passport.user
+        console.log "Claim: user = ", user
         id = switch user.provider
           when "twitter" then {
             name: user.displayName
@@ -284,10 +302,25 @@ module.exports = exports = (log, loga, argv) ->
               username: user.username
             }
           }
+          when "github" then {
+            name: user.displayName
+            github: {
+              id: user.id
+              username: user.username
+              email: user.email
+            }
+          }
+          when "google" then {
+            name: user.displayName
+            google: {
+              id: user.id
+              emails: user.emails
+            }
+          }
 
         setOwner id, (err) ->
           if err
-            console.log 'Failed to claim wiki ', req.hostname, ' for ', id
+            console.log 'Failed to claim wiki ', req.hostname, ' for ', JSON.stringify(id)
             res.sendStatus(500)
           updateOwner getOwner()
           res.json({
@@ -300,9 +333,5 @@ module.exports = exports = (log, loga, argv) ->
       console.log 'Logout...'
       req.logout()
       res.send("OK")
-
-
-
-
 
   security

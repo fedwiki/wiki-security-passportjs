@@ -9,8 +9,11 @@
   "license": "MIT",
   "dependencies": {
     "coffee-script": "1.10",
+    "lodash": "4",
     "passport": "^0.3.2",
     "passport-twitter": "*",
+    "passport-github": "*",
+    "passport-google-oauth20": "*",
     "qs": "6.1"
   },
   "devDependencies": {

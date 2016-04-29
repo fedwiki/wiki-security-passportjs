@@ -2,3 +2,6 @@ node_modules
 *.log
 /client/*.js
 /client/*.map
+
+# don't ignore winchan.js
+!/client/winchan.js

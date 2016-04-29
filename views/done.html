@@ -4,13 +4,6 @@
   <title>Federated Wiki: Sign-on</title>
   <link id='favicon' href='/favicon.png' rel='icon' type='image/png'>
   <link rel="stylesheet" href="/security/style.css">
-  <script language='javascript' type='text/javascript'>
-    if (window.opener.isClaimed == false)
-      window.opener.plugins.security.claim_wiki()
-    else
-      window.opener.plugins.security.update_footer(window.opener.ownerName, true)
-    window.close()
-  </script>
 
 </head>
 <body>
@@ -22,4 +15,14 @@
     {{{authMessage}}}
   </div>
 </body>
+<script src="/security/winchan.js"></script>
+<script>
+var wc = WinChan.onOpen(function(origin, r, cb) {
+  cb({
+    done: true,
+    timestamp: new Date().toString()
+  });
+  window.close();
+})
+</script>
 </html>

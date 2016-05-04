@@ -18,11 +18,11 @@
   },
   "devDependencies": {
     "coffeeify": "*",
-    "grunt": "0.4",
+    "grunt": "^1.0.1",
     "grunt-browserify": "~5",
     "grunt-contrib-watch": "~1",
-    "grunt-git-authors": "~3",
-    "grunt-retire": "*",
-    "grunt-nsp": "*"
+    "grunt-git-authors": "^3.2.0",
+    "grunt-nsp": "*",
+    "grunt-retire": "*"
   }
 }

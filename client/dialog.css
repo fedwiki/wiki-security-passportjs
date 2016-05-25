@@ -223,6 +223,10 @@ section>.contents {
 	vertical-align:middle;
 	height:250px
 }
+#message {
+	position: absolute;
+	width: 250px;
+}
 .message_screen {
 	z-index:-1;
 	-ms-filter:"alpha(opacity=0)";

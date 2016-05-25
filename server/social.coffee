@@ -123,7 +123,11 @@ module.exports = exports = (log, loga, argv) ->
 
   security.isAuthorized = isAuthorized = (req) ->
     if usingPersona
-      # not added legacy support yet, so...
+      try
+        if req.session.passport.user.email is owner
+          return true
+        else
+          return false
       return false
     else if owner is ''
       # site not claimed?
@@ -221,6 +225,18 @@ module.exports = exports = (log, loga, argv) ->
           }
           cb(null, profile)))
 
+    # Persona Strategy
+    PersonaStrategy = require('persona-pass').Strategy
+
+    passport.use(new PersonaStrategy({
+      audience: callbackProtocol + '//' + callbackHost
+      }, (email, cb) ->
+        user = {
+          provider: 'persona'
+          email: email
+        }
+        cb(null, user)))
+
 
     app.use(passport.initialize())
     app.use(passport.session())
@@ -242,11 +258,16 @@ module.exports = exports = (log, loga, argv) ->
     app.get('/auth/google/callback',
       passport.authenticate('google', { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
 
+    # Persona
+    app.post('/auth/browserid',
+      passport.authenticate('persona', { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
+
 
     app.get '/auth/client-settings.json', (req, res) ->
       # the client needs some information to configure itself
       settings = {
         useHttps: useHttps
+        usingPersona: usingPersona
       }
       if wikiHost
         settings.wikiHost = wikiHost
@@ -258,7 +279,6 @@ module.exports = exports = (log, loga, argv) ->
 
       schemeButtons = []
       _(ids).forEach (scheme) ->
-        console.log "Scheme: ", scheme
         switch scheme
           when "twitter" then schemeButtons.push({button: "<a href='/auth/twitter' class='scheme-button twitter-button'><span>Twitter</span></a>"})
           when "github" then schemeButtons.push({button: "<a href='/auth/github' class='scheme-button github-button'><span>Github</span></a>"})
@@ -275,6 +295,49 @@ module.exports = exports = (log, loga, argv) ->
         schemes: schemeButtons
       }
       res.render(path.join(__dirname, '..', 'views', 'securityDialog.html'), info)
+
+    app.get '/auth/personaLogin', (req, res) ->
+      referer = req.headers.referer
+      console.log "logging into: ", url.parse(referer).hostname
+
+      schemeButtons = []
+      if Date.now() < personaEnd
+        schemeButtons.push({
+          button: "<a href='#' id='browserid' class='scheme-button persona-button'><span>Persona</span></a>
+                   <script>
+                    $('#browserid').click(function(){
+                      navigator.id.get(function(assertion) {
+                        if (assertion) {
+                          $('input').val(assertion);
+                          $('form').submit();
+                        } else {
+                          location.reload();
+                        }
+                      });
+                    });
+                   </script>"})
+        info = {
+          wikiName: url.parse(referer).hostname
+          wikiHostName: if wikiHost
+            "part of " + req.hostname + " wiki farm"
+          else
+            "a federated wiki site"
+          title: "Federated Wiki: Site Owner Sign-on"
+          loginText: "Sign in to"
+          message: "Mozilla Persona closes on 30th November 2016. Wiki owners should add an alternative identity as soon as they are able."
+          schemes: schemeButtons
+        }
+      else
+        info = {
+          wikiName: url.parse(referer).hostname
+          wikiHostName: if wikiHost
+            "part of " + req.hostname + " wiki farm"
+          else
+            "a federated wiki site"
+          title: "Federated Wiki: Site Owner Sign-on"
+          message: "Mozilla Persona has now closed. Wiki owners will need to contact the Wiki Farm owner to re-claim their wiki."
+        }
+      res.render(path.join(__dirname, '..', 'views', 'personaDialog.html'), info)
 
     app.get '/auth/loginDone', (req, res) ->
       info = {

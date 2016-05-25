@@ -15,6 +15,9 @@
 
 settings = {}
 
+# Mozilla Persona service closes on
+personaEnd = new Date('2016-11-30')
+
 claim_wiki = () ->
   # we want to initiate a claim on a wiki
   #
@@ -115,7 +118,10 @@ setup = (user) ->
           dialogHost = settings.wikiHost
         else
           dialogHost = window.location.host
-        settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/loginDialog'
+        if settings.usingPersona
+          settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/personaLogin'
+        else
+          settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/loginDialog'
         settings.relayURL = dialogProtocol + '//' + dialogHost + '/auth/relay.html'
 
         update_footer ownerName, isAuthenticated, isOwner

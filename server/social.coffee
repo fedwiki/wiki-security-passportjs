@@ -53,6 +53,8 @@ module.exports = exports = (log, loga, argv) ->
 
   if wikiHost
     callbackHost = wikiHost
+    if url.parse(argv.url).port
+      callbackHost = callbackHost + ":" + url.parse(argv.url).port
   else
     callbackHost = url.parse(argv.url).host
 
@@ -285,7 +287,10 @@ module.exports = exports = (log, loga, argv) ->
           when "google" then schemeButtons.push({button: "<a href='/auth/google' class='scheme-button google-button'><span>Google</span></a>"})
 
       info = {
-        wikiName: url.parse(referer).hostname
+        wikiName: if useHttps
+          url.parse(referer).hostname
+        else
+          url.parse(referer).host
         wikiHostName: if wikiHost
           "part of " + req.hostname + " wiki farm"
         else
@@ -317,7 +322,10 @@ module.exports = exports = (log, loga, argv) ->
                     });
                    </script>"})
         info = {
-          wikiName: url.parse(referer).hostname
+          wikiName: if useHttps
+            url.parse(referer).hostname
+          else
+            url.parse(referer).host
           wikiHostName: if wikiHost
             "part of " + req.hostname + " wiki farm"
           else
@@ -329,7 +337,10 @@ module.exports = exports = (log, loga, argv) ->
         }
       else
         info = {
-          wikiName: url.parse(referer).hostname
+          wikiName: if useHttps
+            url.parse(referer).hostname
+          else
+            url.parse(referer).host
           wikiHostName: if wikiHost
             "part of " + req.hostname + " wiki farm"
           else

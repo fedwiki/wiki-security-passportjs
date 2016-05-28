@@ -110,14 +110,16 @@ setup = (user) ->
     if response.ok
       response.json().then (json) ->
         settings = json
+        if settings.wikiHost
+          dialogHost = settings.wikiHost
+        else
+          dialogHost = window.location.hostname
         if settings.useHttps
           dialogProtocol = 'https:'
         else
           dialogProtocol = window.location.protocol
-        if settings.wikiHost
-          dialogHost = settings.wikiHost
-        else
-          dialogHost = window.location.host
+          if window.location.port
+            dialogHost = dialogHost + ':' + window.location.port
         if settings.usingPersona
           settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/personaLogin'
         else

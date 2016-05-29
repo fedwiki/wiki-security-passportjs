@@ -17,6 +17,8 @@
 </body>
 <script src="/security/winchan.js"></script>
 <script>
+
+document.cookie = "state=loggedIn" + ";domain=." + window.location.hostname + "; path=/; max-age=60;"
 var wc = WinChan.onOpen(function(origin, r, cb) {
   cb({
     done: true,

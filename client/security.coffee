@@ -35,12 +35,12 @@ claim_wiki = () ->
       if response.ok
         response.json().then (json) ->
           ownerName = json.ownerName
-          update_footer ownerName, true, true
+          update_footer ownerName, true
       else
         console.log 'Attempt to claim site failed', response
 
 
-update_footer = (ownerName, isAuthenticated, isOwner) ->
+update_footer = (ownerName, isAuthenticated) ->
   # we update the owner and the login state in the footer, and
   # populate the security dialog
 
@@ -65,7 +65,8 @@ update_footer = (ownerName, isAuthenticated, isOwner) ->
           isAuthenticated = false
           isOwner = false
           user = ''
-          update_footer ownerName, isAuthenticated, isOwner
+          document.cookie = "state=loggedOut" + ";domain=." + settings.cookieDomain + "; path=/; max-age=60;"
+          update_footer ownerName, isAuthenticated
         else
           console.log 'logout failed: ', response
   else
@@ -97,6 +98,22 @@ setup = (user) ->
   # we will replace font-awesome with a small number of svg icons at a later date...
   if (!$("link[href='https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css']").length)
     $('<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">').appendTo("head")
+
+  # signon could happen in a different window, so listen for cookie changes
+  lastCookie = document.cookie
+  window.setInterval ->
+    currentCookie = document.cookie
+    if currentCookie != lastCookie
+      console.log "Cookie changed"
+      unless document.cookie.match('(?:^|;)\\s?state=(.*?)(?:;|$)') is null
+        try
+          switch document.cookie.match('(?:^|;)\\s?state=(.*?)(?:;|$)')[1]
+            when 'loggedIn' then isAuthenticated = true
+            when 'loggedOut' then isAuthenticated = false
+          update_footer ownerName, isAuthenticated
+      lastCookie = currentCookie
+  , 100
+
   wiki.getScript '/security/winchan.js'
   if (!$("link[href='/security/style.css']").length)
     $('<link rel="stylesheet" href="/security/style.css">').appendTo("head")
@@ -114,6 +131,7 @@ setup = (user) ->
           dialogHost = settings.wikiHost
         else
           dialogHost = window.location.hostname
+        settings.cookieDomain = dialoghost
         if settings.useHttps
           dialogProtocol = 'https:'
         else
@@ -126,7 +144,7 @@ setup = (user) ->
           settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/loginDialog'
         settings.relayURL = dialogProtocol + '//' + dialogHost + '/auth/relay.html'
 
-        update_footer ownerName, isAuthenticated, isOwner
+        update_footer ownerName, isAuthenticated
     else
       console.log 'Unable to fetch client settings: ', response
 

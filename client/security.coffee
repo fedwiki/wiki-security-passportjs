@@ -131,7 +131,7 @@ setup = (user) ->
           dialogHost = settings.wikiHost
         else
           dialogHost = window.location.hostname
-        settings.cookieDomain = dialoghost
+        settings.cookieDomain = dialogHost
         if settings.useHttps
           dialogProtocol = 'https:'
         else

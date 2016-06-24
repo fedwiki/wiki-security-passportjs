@@ -39,9 +39,7 @@ module.exports = exports = (log, loga, argv) ->
 
   console.log "statusDir: ", statusDir
 
-  idFile = path.join(statusDir, "owner.json")
-
-  personaIDFile = argv.id
+  idFile = argv.id
   usingPersona = false
 
   if argv.security_useHttps
@@ -70,36 +68,24 @@ module.exports = exports = (log, loga, argv) ->
   # if it is return the owner.
 
   security.retrieveOwner = (cb) ->
-    fs.exists personaIDFile, (exists) ->
+    fs.exists idFile, (exists) ->
       if exists
-        fs.readFile(personaIDFile, (err, data) ->
+        fs.readFile(idFile, (err, data) ->
           if err then return cb err
-          owner += data
-          usingPersona = true
+          owner = JSON.parse(data)
+          console.log 'retrieveOwner owner: ', owner
+          if _.has(owner, 'persona')
+            usingPersona = true
           cb())
       else
-        fs.exists idFile, (exists) ->
-          if exists
-            fs.readFile(idFile, (err, data) ->
-              if err then return cb err
-              owner = JSON.parse(data)
-              cb())
-          else
-            owner = ''
-            cb()
+        owner = ''
+        cb()
 
   security.getOwner = getOwner = ->
-    if usingPersona
-      if ~owner.indexOf '@'
-        ownerName = owner.substr(0, owner.indexOf('@'))
-      else
-        ownerName = owner
-      ownerName = ownerName.split('.').join(' ')
+    if !owner.name?
+      ownerName = ''
     else
-      if !owner.name?
-        ownerName = ''
-      else
-        ownerName = owner.name
+      ownerName = owner.name
     ownerName
 
   security.setOwner = setOwner = (id, cb) ->
@@ -124,36 +110,31 @@ module.exports = exports = (log, loga, argv) ->
       return ''
 
   security.isAuthorized = isAuthorized = (req) ->
-    if usingPersona
-      try
-        if req.session.passport.user.email is owner
-          return true
-        else
-          return false
-      return false
-    else if owner is ''
-      # site not claimed?
+    if owner is ''
+      console.log 'isAuthorized: site not claimed'
       return true
     else
       try
-        if owner[req.session.passport.user.provider].id is req.session.passport.user.id
+        idProvider = _.first(_.keys(_.pick(owner, _.keys(req.session.passport.user))))
+        if _.isEqual(owner[idProvider], req.session.passport.user[idProvider])
           return true
         else
           return false
-      return false
+      catch error
+        return false
 
 
   security.isAdmin = (req) ->
-    if usingPersona
-      # not added legacy support yet, so...
-      return false
-    else
-      try
-        if admin is req.session.passport.user.id
+    try
+      if admin
+        idProvider = _.first(_.keys(_.pick(admin, _.keys(req.session.passport.user))))
+        if _.isEqual(admin[idProvider], req.session.passport.user[idProvider])
           return true
         else
           return false
+    catch error
       return false
+
 
   security.login = (updateOwner) ->
     console.log "Login...."
@@ -234,8 +215,7 @@ module.exports = exports = (log, loga, argv) ->
       audience: callbackProtocol + '//' + callbackHost
       }, (email, cb) ->
         user = {
-          provider: 'persona'
-          email: email
+          persona: { email: email }
         }
         cb(null, user)))
 

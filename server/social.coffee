@@ -115,8 +115,8 @@ module.exports = exports = (log, loga, argv) ->
       return true
     else
       try
-        idProvider = _.first(_.keys(_.pick(owner, _.keys(req.session.passport.user))))
-        if _.isEqual(owner[idProvider], req.session.passport.user[idProvider])
+        idProvider = req.session.passport.user.provider
+        if _.isEqual(owner[idProvider].id, req.session.passport.user.id)
           return true
         else
           return false
@@ -127,8 +127,8 @@ module.exports = exports = (log, loga, argv) ->
   security.isAdmin = (req) ->
     try
       if admin
-        idProvider = _.first(_.keys(_.pick(admin, _.keys(req.session.passport.user))))
-        if _.isEqual(admin[idProvider], req.session.passport.user[idProvider])
+        idProvider = req.session.passport.user.provider
+        if _.isEqual(admin[idProvider].id, req.session.passport.user.id)
           return true
         else
           return false

@@ -4,8 +4,6 @@ Google's OAuth integration allows us to specify multiple callback URLs, so we wi
 
 ### Register an application with Google
 
-<!-- Notes: Based on Auth0 docs - see https://auth0.com/docs/connections/social/google -->
-
 * While logged onto your Google account, goto the [API Manager](https://console.developers.google.com/)
 * From the project dropdown at the top of the page, select **Create a project...**
 

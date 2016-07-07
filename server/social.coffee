@@ -37,8 +37,6 @@ module.exports = exports = (log, loga, argv) ->
 
   statusDir = argv.status
 
-  console.log "statusDir: ", statusDir
-
   idFile = argv.id
   usingPersona = false
 
@@ -73,7 +71,6 @@ module.exports = exports = (log, loga, argv) ->
         fs.readFile(idFile, (err, data) ->
           if err then return cb err
           owner = JSON.parse(data)
-          console.log 'retrieveOwner owner: ', owner
           if _.has(owner, 'persona')
             usingPersona = true
           cb())
@@ -116,10 +113,19 @@ module.exports = exports = (log, loga, argv) ->
     else
       try
         idProvider = req.session.passport.user.provider
-        if _.isEqual(owner[idProvider].id, req.session.passport.user.id)
-          return true
-        else
-          return false
+        switch idProvider
+          when 'github', 'google', 'twitter'
+            if _.isEqual(owner[idProvider].id, req.session.passport.user.id)
+              return true
+            else
+              return false
+          when 'persona'
+            if _.isEqual(owner[idProvider].email, req.session.passport.user.email)
+              return true
+            else
+              return false
+          else
+            return false
       catch error
         return false
 
@@ -128,10 +134,19 @@ module.exports = exports = (log, loga, argv) ->
     try
       if admin
         idProvider = req.session.passport.user.provider
-        if _.isEqual(admin[idProvider].id, req.session.passport.user.id)
-          return true
-        else
-          return false
+        switch idProvider
+          when 'github', 'google', 'twitter'
+            if _.isEqual(admin[idProvider].id, req.session.passport.user.id)
+              return true
+            else
+              return false
+          when 'persona'
+            if _.isEqual(admin[idProvider].email, req.session.passport.user.email)
+              return true
+            else
+              return false
+          else
+            return false
     catch error
       return false
 
@@ -164,11 +179,11 @@ module.exports = exports = (log, loga, argv) ->
         # the OAuth application settings - so we don't specify it.
         }, (accessToken, refreshToken, profile, cb) ->
           user = {
-            provider: 'github',
+            provider: 'github'
             id: profile.id
             username: profile.username
             displayName: profile.displayName
-            email: profile.emails[0].value
+            emails: profile.emails
           }
           cb(null, user)))
 
@@ -211,11 +226,15 @@ module.exports = exports = (log, loga, argv) ->
     # Persona Strategy
     PersonaStrategy = require('persona-pass').Strategy
 
+    personaAudience = callbackProtocol + '//' + callbackHost
+    console.log 'Persona Audience: ', personaAudience
+
     passport.use(new PersonaStrategy({
-      audience: callbackProtocol + '//' + callbackHost
+      audience: personaAudience
       }, (email, cb) ->
         user = {
-          persona: { email: email }
+          provider: "persona"
+          email: email
         }
         cb(null, user)))
 
@@ -347,7 +366,6 @@ module.exports = exports = (log, loga, argv) ->
         res.sendStatus(403)
       else
         user = req.session.passport.user
-        console.log "Claim: user = ", user
         id = switch user.provider
           when "twitter" then {
             name: user.displayName
@@ -361,7 +379,7 @@ module.exports = exports = (log, loga, argv) ->
             github: {
               id: user.id
               username: user.username
-              email: user.email
+              email: user.emails
             }
           }
           when "google" then {

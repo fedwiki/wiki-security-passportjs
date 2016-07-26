@@ -350,15 +350,27 @@ module.exports = exports = (log, loga, argv) ->
       res.render(path.join(__dirname, '..', 'views', 'personaDialog.html'), info)
 
     app.get '/auth/loginDone', (req, res) ->
+      referer = req.headers.referer
       info = {
+        wikiName: if useHttps
+          url.parse(referer).hostname
+        else
+          url.parse(referer).host
+        wikiHostName: if wikiHost
+          "part of " + req.hostname + " wiki farm"
+        else
+          "a federated wiki site"
         title: if owner
           "Wiki Site Owner Sign-on"
         else
           "Sign-on to claim Wiki site"
         owner: getOwner
-        authMessage: "You are now logged in..."
+        authMessage: "You are now logged in<br>If this window hasn't closed, you can close it."
       }
       res.render(path.join(__dirname, '..', 'views', 'done.html'), info)
+
+    app.get '/auth/addAuthDialog', (req, res) ->
+
 
     app.get '/auth/claim-wiki', (req, res) ->
       if owner

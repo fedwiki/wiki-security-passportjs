@@ -114,38 +114,46 @@ setup = (user) ->
       lastCookie = currentCookie
   , 100
 
-  wiki.getScript '/security/winchan.js'
-  if (!$("link[href='/security/style.css']").length)
-    $('<link rel="stylesheet" href="/security/style.css">').appendTo("head")
-  myInit = {
-    method: 'GET'
-    cache: 'no-cache'
-    mode: 'same-origin'
-  }
-  fetch '/auth/client-settings.json', myInit
-  .then (response) ->
-    if response.ok
-      response.json().then (json) ->
-        settings = json
-        if settings.wikiHost
-          dialogHost = settings.wikiHost
-        else
-          dialogHost = window.location.hostname
-        settings.cookieDomain = dialogHost
-        if settings.useHttps
-          dialogProtocol = 'https:'
-        else
-          dialogProtocol = window.location.protocol
-          if window.location.port
-            dialogHost = dialogHost + ':' + window.location.port
-        if settings.usingPersona
-          settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/personaLogin'
-        else
-          settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/loginDialog'
-        settings.relayURL = dialogProtocol + '//' + dialogHost + '/auth/relay.html'
+  wiki.getScript '/security/modernizr-custom.js', () ->
+    console.log 'modernizr loaded'
+    unless Modernizr.promises
+      require('es6-promise').polyfill()
 
-        update_footer ownerName, isAuthenticated
-    else
-      console.log 'Unable to fetch client settings: ', response
+    unless Modernizr.fetch
+      require('whatwg-fetch')
+
+    wiki.getScript '/security/winchan.js'
+    if (!$("link[href='/security/style.css']").length)
+      $('<link rel="stylesheet" href="/security/style.css">').appendTo("head")
+    myInit = {
+      method: 'GET'
+      cache: 'no-cache'
+      mode: 'same-origin'
+    }
+    fetch '/auth/client-settings.json', myInit
+    .then (response) ->
+      if response.ok
+        response.json().then (json) ->
+          settings = json
+          if settings.wikiHost
+            dialogHost = settings.wikiHost
+          else
+            dialogHost = window.location.hostname
+          settings.cookieDomain = dialogHost
+          if settings.useHttps
+            dialogProtocol = 'https:'
+          else
+            dialogProtocol = window.location.protocol
+            if window.location.port
+              dialogHost = dialogHost + ':' + window.location.port
+          if settings.usingPersona
+            settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/personaLogin'
+          else
+            settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/loginDialog'
+          settings.relayURL = dialogProtocol + '//' + dialogHost + '/auth/relay.html'
+
+          update_footer ownerName, isAuthenticated
+      else
+        console.log 'Unable to fetch client settings: ', response
 
 window.plugins.security = {setup, claim_wiki, update_footer}

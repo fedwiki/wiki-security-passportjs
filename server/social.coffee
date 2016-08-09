@@ -131,24 +131,31 @@ module.exports = exports = (log, loga, argv) ->
 
 
   security.isAdmin = (req) ->
+    return false if admin is undefined
     try
-      if admin
-        idProvider = req.session.passport.user.provider
-        switch idProvider
-          when 'github', 'google', 'twitter'
-            if _.isEqual(admin[idProvider].id, req.session.passport.user.id)
-              return true
-            else
-              return false
-          when 'persona'
-            if _.isEqual(admin[idProvider].email, req.session.passport.user.email)
-              return true
-            else
-              return false
-          else
-            return false
-    catch error
+      return false if req.session.passport.user.provider is undefined
+    catch
       return false
+
+    idProvider = req.session.passport.user.provider
+
+    if admin[idProvider] is undefined
+      console.log 'admin not defined for ', idProvider
+      return false
+
+    switch idProvider
+      when "github", "google", "twitter"
+        if _.isEqual(admin[idProvider], req.session.passport.user.id)
+          return true
+        else
+          return false
+      when "persona"
+        if _.isEqual(admin[idProvider], req.session.passport.user.email)
+          return true
+        else
+          return false
+      else
+        return false
 
 
   security.login = (updateOwner) ->

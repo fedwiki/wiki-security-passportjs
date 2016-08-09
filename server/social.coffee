@@ -351,6 +351,9 @@ module.exports = exports = (log, loga, argv) ->
 
     app.get '/auth/loginDone', (req, res) ->
       referer = req.headers.referer
+      if referer is undefined
+        referer = ''
+      console.log 'loginDone - referer: ', referer
       info = {
         wikiName: if useHttps
           url.parse(referer).hostname

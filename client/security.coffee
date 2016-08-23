@@ -35,6 +35,7 @@ claim_wiki = () ->
       if response.ok
         response.json().then (json) ->
           ownerName = json.ownerName
+          window.isClaimed = true
           update_footer ownerName, true
       else
         console.log 'Attempt to claim site failed', response
@@ -69,6 +70,41 @@ update_footer = (ownerName, isAuthenticated) ->
           update_footer ownerName, isAuthenticated
         else
           console.log 'logout failed: ', response
+    # These probably should move into a menu, but this is far easier to begin with
+    if !isClaimed
+      $('footer > #security').append "<a href='#' id='claim' class='foot-item' title='Claim this Wiki'><i class='fa fa-key fa-lg fa-fw'></i></a>"
+      $('footer > #security > #claim').click (e) ->
+        e.preventDefault()
+        claim_wiki()
+    else
+      $('footer > #security').append "<a href='#' id='addAltAuth' class='foot-item' title='Add Alternative Credentials'><i class='fa fa-user-plus fa-lg fa-fw'></i></a>"
+      $('footer > #security > #addAltAuth').click (e) ->
+        e.preventDefault
+
+        w = WinChan.open({
+          url: settings.dialogAddAltURL
+          relay_url: settings.relayURL
+          window_features: "menubar=0, location=0, resizable=0, scrollbars=0, status=0, dialog=1, width=700, height=375"
+          params: {}
+          }, (err, r) ->
+            if err
+              console.log err
+            else
+              # add call to add alternative to owner here
+              console.log 'send request to add owner identity'
+              myInit = {
+                method: 'GET'
+                cache: 'no-cache'
+                mode: 'same-origin'
+                credentials: 'include'
+              }
+              fetch '/auth/addAltAuth', myInit
+              .then (response) ->
+                if response.ok
+                  console.log 'Alternative Identity added', response
+                else
+                  console.log 'Attempt to claim site failed', response
+              )
   else
     if !isClaimed
       signonTitle = 'Claim this Wiki'
@@ -151,6 +187,8 @@ setup = (user) ->
           else
             settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/loginDialog'
           settings.relayURL = dialogProtocol + '//' + dialogHost + '/auth/relay.html'
+          settings.dialogAddAltURL = dialogProtocol + '//' + dialogHost + '/auth/addAuthDialog'
+
 
           update_footer ownerName, isAuthenticated
       else

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300,700' rel='stylesheet' type='text/css'>
+  <title>{{title}}</title>
+  <link id='favicon' href='/favicon.png' rel='icon' type='image/png'>
+  <link rel="stylesheet" href="/security/dialog.css">
+
+</head>
+<body>
+  <div id="content">
+    <div class="wikiinfo">
+      <div class="table">
+        <div class="vertical">
+          <img id="wiki_logo" src="//{{wikiName}}/favicon.png" width="32px" height="32px"></img>
+          <h2 id=wiki_name>{{wikiName}}</h2>
+          <h3 id="wiki_hostname">{{wikiHostName}}</h3>
+        </div>
+      </div>
+    </div>
+    <div id="signIn">
+      <div class="table">
+        <div class="vertical">
+          <div class="contents">
+            <div class="scheme_section vcenter" style="width: 249px;">
+              <h2>Add Alternative Authentication Scheme</h2>
+              {{#schemes}}
+                <p>{{{button}}}</p>
+              {{/schemes}}
+              {{#if message}}
+              <div id="message">
+                <p>{{message}}</p>
+              </div>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <span id="footerText">
+      <strong>Federated Wiki.</strong>
+      Sharing ideas through federation.
+      <a href="http://fed.wiki/view/welcome-visitors/view/federated-wiki" target="_blank">Learn more→</a>
+    </span>
+  </footer>
+</body>
+</html>

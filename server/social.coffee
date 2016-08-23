@@ -16,6 +16,7 @@ qs = require 'qs'
 url = require 'url'
 
 _ = require('lodash')
+glob = require 'glob'
 
 passport = require 'passport'
 
@@ -97,7 +98,7 @@ module.exports = exports = (log, loga, argv) ->
       else
         cb('Already Claimed')
 
-  security.getUser = (req) ->
+  security.getUser = getUser = (req) ->
     if req.session.passport
       if req.session.passport.user
         return req.session.passport.user
@@ -112,15 +113,16 @@ module.exports = exports = (log, loga, argv) ->
       return true
     else
       try
-        idProvider = req.session.passport.user.provider
+        idProvider = _.head(_.keys(req.session.passport.user))
+        console.log 'isAuth - idProvider: ', idProvider
         switch idProvider
           when 'github', 'google', 'twitter'
-            if _.isEqual(owner[idProvider].id, req.session.passport.user.id)
+            if _.isEqual(owner[idProvider].id, req.session.passport.user[idProvider].id)
               return true
             else
               return false
           when 'persona'
-            if _.isEqual(owner[idProvider].email, req.session.passport.user.email)
+            if _.isEqual(owner[idProvider].email, req.session.passport.user[idProvider].email)
               return true
             else
               return false
@@ -137,7 +139,7 @@ module.exports = exports = (log, loga, argv) ->
     catch
       return false
 
-    idProvider = req.session.passport.user.provider
+    idProvider = _.head(_.keys(req.session.passport.user))
 
     if admin[idProvider] is undefined
       console.log 'admin not defined for ', idProvider
@@ -145,12 +147,12 @@ module.exports = exports = (log, loga, argv) ->
 
     switch idProvider
       when "github", "google", "twitter"
-        if _.isEqual(admin[idProvider], req.session.passport.user.id)
+        if _.isEqual(admin[idProvider], req.session.passport.user[idProvider].id)
           return true
         else
           return false
       when "persona"
-        if _.isEqual(admin[idProvider], req.session.passport.user.email)
+        if _.isEqual(admin[idProvider], req.session.passport.user[idProvider].email)
           return true
         else
           return false
@@ -185,8 +187,7 @@ module.exports = exports = (log, loga, argv) ->
         # callbackURL is optional, and if it exists must match that given in
         # the OAuth application settings - so we don't specify it.
         }, (accessToken, refreshToken, profile, cb) ->
-          user = {
-            provider: 'github'
+          user.github = {
             id: profile.id
             username: profile.username
             displayName: profile.displayName
@@ -204,10 +205,9 @@ module.exports = exports = (log, loga, argv) ->
         consumerSecret: argv.twitter_consumerSecret
         callbackURL: callbackProtocol + '//' + callbackHost + '/auth/twitter/callback'
         }, (accessToken, refreshToken, profile, cb) ->
-          user = {
-            provider: 'twitter',
-            id: profile.id,
-            username: profile.username,
+          user.twitter = {
+            id: profile.id
+            username: profile.username
             displayName: profile.displayName
           }
           cb(null, user)))
@@ -222,8 +222,7 @@ module.exports = exports = (log, loga, argv) ->
         clientSecret: argv.google_clientSecret
         callbackURL: callbackProtocol + '//' + callbackHost + '/auth/google/callback'
         }, (accessToken, refreshToken, profile, cb) ->
-          user = {
-            provider: "google"
+          user.google = {
             id: profile.id
             displayName: profile.displayName
             emails: profile.emails
@@ -240,8 +239,9 @@ module.exports = exports = (log, loga, argv) ->
       audience: personaAudience
       }, (email, cb) ->
         user = {
-          provider: "persona"
-          email: email
+          persona: {
+            email: email
+          }
         }
         cb(null, user)))
 
@@ -357,6 +357,7 @@ module.exports = exports = (log, loga, argv) ->
       res.render(path.join(__dirname, '..', 'views', 'personaDialog.html'), info)
 
     app.get '/auth/loginDone', (req, res) ->
+      console.log "Done: ", req.session.passport
       referer = req.headers.referer
       if referer is undefined
         referer = ''
@@ -380,6 +381,86 @@ module.exports = exports = (log, loga, argv) ->
       res.render(path.join(__dirname, '..', 'views', 'done.html'), info)
 
     app.get '/auth/addAuthDialog', (req, res) ->
+      # only makes sense to add alternative authentication scheme if
+      # this the user is authenticated
+      console.log 'User:', getUser(req)
+      if getUser(req)
+
+        referer = req.headers.referer
+
+        console.log "User: ", owner
+        currentSchemes = _.keys(owner)
+        console.log "currentSchemes: ", currentSchemes
+        altSchemes = _.difference(ids, currentSchemes)
+        console.log "altSchemes: ", altSchemes
+
+        schemeButtons = []
+        _(altSchemes).forEach (scheme) ->
+          switch scheme
+            when "twitter" then schemeButtons.push({button: "<a href='/auth/twitter' class='scheme-button twitter-button'><span>Twitter</span></a>"})
+            when "github" then schemeButtons.push({button: "<a href='/auth/github' class='scheme-button github-button'><span>Github</span></a>"})
+            when "google" then schemeButtons.push({button: "<a href='/auth/google' class='scheme-button google-button'><span>Google</span></a>"})
+
+        info = {
+          wikiName: if useHttps
+            url.parse(referer).hostname
+          else
+            url.parse(referer).host
+          wikiHostName: if wikiHost
+            "part of " + req.hostname + " wiki farm"
+          else
+            "a federated wiki site"
+          title: "Federated Wiki: Add Alternative Authentication Scheme"
+          schemes: schemeButtons
+        }
+        res.render(path.join(__dirname, '..', 'views', 'addAlternativeDialog.html'), info)
+
+      else
+        # user is not authenticated
+        res.sendStatus(403)
+
+    authorized = (req, res, next) ->
+      if isAuthorized(req)
+        next()
+      else
+        console.log 'rejecting', req.path
+        res.sendStatus(403)
+
+    app.get '/auth/addAltAuth', authorized, (req, res) ->
+      # add alternative authorentication scheme - only makes sense if user owns this site
+      res.status(202).end()
+
+      user = req.session.passport.user
+
+      console.log 'User: ', user
+      console.log 'Owner: ', owner
+
+      console.log 'In add alt auth...'
+
+      wikiDir = path.resolve(argv.data, '..')
+      statusDir = argv.status.split(path.sep).slice(-1)[0]
+      idFileName = path.parse(idFile).base
+
+      pattern = '*/' + statusDir + '/' + idFileName
+
+      glob(pattern, {cwd: wikiDir}, (err, files) ->
+        _.forEach files, (file) ->
+          # are we the owner?
+          fs.readFile(path.join(wikiDir, file), 'utf8', (err, data) ->
+            if err
+              console.log 'Error reading ', file, err
+              return
+            siteOwner = JSON.parse(data)
+            console.log file , _.intersectionWith(_.entries(siteOwner), _.entries(user), _.isEqual)
+
+            if _.intersectionWith(_.entries(siteOwner), _.entries(user), _.isEqual).length >
+              console.log "Site: ", file, "is mine..."
+            else
+              console.log "Site: ", file, " not mine\n\n"
+
+
+            )
+        )
 
 
     app.get '/auth/claim-wiki', (req, res) ->
@@ -388,39 +469,60 @@ module.exports = exports = (log, loga, argv) ->
         res.sendStatus(403)
       else
         user = req.session.passport.user
-        id = switch user.provider
-          when "twitter" then {
-            name: user.displayName
-            twitter: {
-              id: user.id
-              username: user.username
-            }
-          }
-          when "github" then {
-            name: user.displayName
-            github: {
-              id: user.id
-              username: user.username
-              email: user.emails
-            }
-          }
-          when "google" then {
-            name: user.displayName
-            google: {
-              id: user.id
-              emails: user.emails
-            }
-          }
+        # there can be more than one id provider - initially only if we logged in with persona
+        idProviders = _.keys(user)
 
-        setOwner id, (err) ->
-          if err
-            console.log 'Failed to claim wiki ', req.hostname, ' for ', JSON.stringify(id)
-            res.sendStatus(500)
-          updateOwner getOwner()
-          res.json({
-            ownerName: id.name
-            })
+        id = {}
+        idProviders.forEach (idProvider) ->
+          id = switch idProvider
+            when "twitter" then {
+              name: user.twitter.displayName
+              twitter: {
+                id: user.twitter.id
+                username: user.twitter.username
+              }
+            }
+            when "github" then {
+              name: user.github.displayName
+              github: {
+                id: user.github.id
+                username: user.github.username
+                email: user.github.emails
+              }
+            }
+            when "google" then {
+              name: user.google.displayName
+              google: {
+                id: user.google.id
+                emails: user.google.emails
+              }
+            }
+            # only needed until persona closes
+            when "persona" then {
+              name: user.persona.email
+                .substr(0, user.persona.email.indexOf('@'))
+                .split('.')
+                .join(' ')
+                .toLowerCase()
+                .replace(/(^| )(\w)/g, (x) ->
+                  return x.toUpperCase())
+              persona: {
+                email: user.persona.email
+              }
+            }
 
+        if _.isEmpty(id)
+          console.log 'Unable to claim wiki', req.hostname, ' no valid id provided'
+          res.sendStatus(500)
+        else
+          setOwner id, (err) ->
+            if err
+              console.log 'Failed to claim wiki ', req.hostname, ' for ', id
+              res.sendStatus(500)
+            updateOwner getOwner()
+            res.json({
+              ownerName: id.name
+              })
 
 
     app.get '/logout', (req, res) ->

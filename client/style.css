@@ -1,7 +1,11 @@
 
 
-#show-security-dialog, #logout{
+#security #show-security-dialog, #logout, #claim{
   color: gold;
+}
+
+#security #addAltAuth, #claim {
+  color: floralwhite;
 }
 
 #isOwner {

@@ -15,11 +15,10 @@ qs = require 'qs'
 
 url = require 'url'
 
-_ = require('lodash')
+_ = require 'lodash'
 glob = require 'glob'
 
-passport = require 'passport'
-
+passport = require('passport')
 
 # Export a function that generates security handler
 # when called with options object.
@@ -180,7 +179,9 @@ module.exports = exports = (log, loga, argv) ->
       ids.push('github')
       GithubStrategy = require('passport-github').Strategy
 
-      passport.use(new GithubStrategy({
+      githubStrategyName = callbackHost + 'Github'
+
+      passport.use(githubStrategyName, new GithubStrategy({
         clientID: argv.github_clientID
         clientSecret: argv.github_clientSecret
         scope: 'user:emails'
@@ -200,7 +201,9 @@ module.exports = exports = (log, loga, argv) ->
       ids.push('twitter')
       TwitterStrategy = require('passport-twitter').Strategy
 
-      passport.use(new TwitterStrategy({
+      twitterStrategyName = callbackHost + 'Twitter'
+
+      passport.use(twitterStrategyName, new TwitterStrategy({
         consumerKey: argv.twitter_consumerKey
         consumerSecret: argv.twitter_consumerSecret
         callbackURL: callbackProtocol + '//' + callbackHost + '/auth/twitter/callback'
@@ -217,7 +220,9 @@ module.exports = exports = (log, loga, argv) ->
       ids.push('google')
       GoogleStrategy = require('passport-google-oauth20').Strategy
 
-      passport.use(new GoogleStrategy({
+      googleStrategyName = callbackHost + 'Google'
+
+      passport.use(googleStrategyName, new GoogleStrategy({
         clientID: argv.google_clientID
         clientSecret: argv.google_clientSecret
         callbackURL: callbackProtocol + '//' + callbackHost + '/auth/google/callback'
@@ -235,7 +240,9 @@ module.exports = exports = (log, loga, argv) ->
     personaAudience = callbackProtocol + '//' + callbackHost
     console.log 'Persona Audience: ', personaAudience
 
-    passport.use(new PersonaStrategy({
+    personaStrategyName = callbackHost + 'Persona'
+
+    passport.use(personaStrategyName, new PersonaStrategy({
       audience: personaAudience
       }, (email, cb) ->
         user = {
@@ -250,25 +257,28 @@ module.exports = exports = (log, loga, argv) ->
     app.use(passport.session())
 
     # Github
-    app.get('/auth/github', passport.authenticate('github', {scope: 'user:email'}), (req, res) -> )
-    app.get('/auth/github/callback',
-      passport.authenticate('github', { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
+    if _.indexOf(ids,'github')
+      app.get('/auth/github', passport.authenticate(githubStrategyName, {scope: 'user:email'}), (req, res) -> )
+      app.get('/auth/github/callback',
+        passport.authenticate(githubStrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
 
     # Twitter
-    app.get('/auth/twitter', passport.authenticate('twitter'), (req, res) -> )
-    app.get('/auth/twitter/callback',
-      passport.authenticate('twitter', { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
+    if _.indexOf(ids,'twitter')
+      app.get('/auth/twitter', passport.authenticate(twitterStrategyName), (req, res) -> )
+      app.get('/auth/twitter/callback',
+        passport.authenticate(twitterStrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
 
     # Google
-    app.get('/auth/google', passport.authenticate('google', { scope: [
-      'https://www.googleapis.com/auth/plus.profile.emails.read'
-      ]}))
-    app.get('/auth/google/callback',
-      passport.authenticate('google', { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
+    if _.indexOf(ids,'google')
+      app.get('/auth/google', passport.authenticate(googleStrategyName, { scope: [
+        'https://www.googleapis.com/auth/plus.profile.emails.read'
+        ]}))
+      app.get('/auth/google/callback',
+        passport.authenticate(googleStrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
 
     # Persona
     app.post('/auth/browserid',
-      passport.authenticate('persona', { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
+      passport.authenticate(personaStrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
 
 
     app.get '/auth/client-settings.json', (req, res) ->

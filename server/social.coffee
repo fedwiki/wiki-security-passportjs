@@ -257,24 +257,21 @@ module.exports = exports = (log, loga, argv) ->
     app.use(passport.session())
 
     # Github
-    if _.indexOf(ids,'github')
-      app.get('/auth/github', passport.authenticate(githubStrategyName, {scope: 'user:email'}), (req, res) -> )
-      app.get('/auth/github/callback',
-        passport.authenticate(githubStrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
+    app.get('/auth/github', passport.authenticate(githubStrategyName, {scope: 'user:email'}), (req, res) -> )
+    app.get('/auth/github/callback',
+      passport.authenticate(githubStrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
 
     # Twitter
-    if _.indexOf(ids,'twitter')
-      app.get('/auth/twitter', passport.authenticate(twitterStrategyName), (req, res) -> )
-      app.get('/auth/twitter/callback',
-        passport.authenticate(twitterStrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
+    app.get('/auth/twitter', passport.authenticate(twitterStrategyName), (req, res) -> )
+    app.get('/auth/twitter/callback',
+      passport.authenticate(twitterStrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
 
     # Google
-    if _.indexOf(ids,'google')
-      app.get('/auth/google', passport.authenticate(googleStrategyName, { scope: [
-        'https://www.googleapis.com/auth/plus.profile.emails.read'
-        ]}))
-      app.get('/auth/google/callback',
-        passport.authenticate(googleStrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
+    app.get('/auth/google', passport.authenticate(googleStrategyName, { scope: [
+      'https://www.googleapis.com/auth/plus.profile.emails.read'
+      ]}))
+    app.get('/auth/google/callback',
+      passport.authenticate(googleStrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
 
     # Persona
     app.post('/auth/browserid',
@@ -463,8 +460,12 @@ module.exports = exports = (log, loga, argv) ->
             siteOwner = JSON.parse(data)
             console.log file , _.intersectionWith(_.entries(siteOwner), _.entries(user), _.isEqual)
 
-            if _.intersectionWith(_.entries(siteOwner), _.entries(user), _.isEqual).length >
-              console.log "Site: ", file, "is mine..."
+            if _.intersectionWith(_.entries(siteOwner), _.entries(user), _.isEqual).length > 0
+              console.log "Site: ", file, "is mine...\n\n"
+              console.log "User:            ", user
+              console.log "Owner (orig):    ", siteOwner
+              updateOwner = _.merge(siteOwner, user)
+              console.log "Owner (updated): ", updateOwner
             else
               console.log "Site: ", file, " not mine\n\n"
 

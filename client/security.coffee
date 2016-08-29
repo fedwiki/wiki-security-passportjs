@@ -77,34 +77,38 @@ update_footer = (ownerName, isAuthenticated) ->
         e.preventDefault()
         claim_wiki()
     else
-      $('footer > #security').append "<a href='#' id='addAltAuth' class='foot-item' title='Add Alternative Credentials'><i class='fa fa-user-plus fa-lg fa-fw'></i></a>"
-      $('footer > #security > #addAltAuth').click (e) ->
-        e.preventDefault
+      # only offer to add alternative id if using persona - at least initially.
+      if settings.usingPersona
+        $('footer > #security').append "<a href='#' id='addAltAuth' class='foot-item' title='Add Alternative Credentials'><i class='fa fa-user-plus fa-lg fa-fw'></i></a>"
+        $('footer > #security > #addAltAuth').click (e) ->
+          e.preventDefault
 
-        w = WinChan.open({
-          url: settings.dialogAddAltURL
-          relay_url: settings.relayURL
-          window_features: "menubar=0, location=0, resizable=0, scrollbars=0, status=0, dialog=1, width=700, height=375"
-          params: {}
-          }, (err, r) ->
-            if err
-              console.log err
-            else
-              # add call to add alternative to owner here
-              console.log 'send request to add owner identity'
-              myInit = {
-                method: 'GET'
-                cache: 'no-cache'
-                mode: 'same-origin'
-                credentials: 'include'
-              }
-              fetch '/auth/addAltAuth', myInit
-              .then (response) ->
-                if response.ok
-                  console.log 'Alternative Identity added', response
-                else
-                  console.log 'Attempt to claim site failed', response
-              )
+          w = WinChan.open({
+            url: settings.dialogAddAltURL
+            relay_url: settings.relayURL
+            window_features: "menubar=0, location=0, resizable=0, scrollbars=0, status=0, dialog=1, width=700, height=375"
+            params: {}
+            }, (err, r) ->
+              if err
+                console.log err
+              else
+                # add call to add alternative to owner here
+                console.log 'send request to add owner identity'
+                myInit = {
+                  method: 'GET'
+                  cache: 'no-cache'
+                  mode: 'same-origin'
+                  credentials: 'include'
+                }
+                fetch '/auth/addAltAuth', myInit
+                .then (response) ->
+                  if response.ok
+                    console.log 'Alternative Identity added', response
+                    settings.usingPersona = false
+                    update_footer ownerName, isAuthenticated  
+                  else
+                    console.log 'Attempt to claim site failed', response
+                )
   else
     if !isClaimed
       signonTitle = 'Claim this Wiki'

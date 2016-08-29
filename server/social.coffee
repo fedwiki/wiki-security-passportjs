@@ -59,6 +59,22 @@ module.exports = exports = (log, loga, argv) ->
   # Mozilla Persona service closes on
   personaEnd = new Date('2016-11-30')
 
+  watchForOwnerChange = ->
+    # we watch for owner changes, so we can update the information held here
+    fs.watch(idFile, (eventType, filename) ->
+      # re-read the owner file
+      fs.readFile(idFile, (err, data) ->
+        if err
+          console.log 'Error reading ', idFile, err
+          return
+        owner = JSON.parse(data)
+        usingPersona = false
+        if _.isEmpty(_.intersection(_.keys(owner), ids))
+          if _.has(owner, 'persona')
+            usingPersona = true
+        ownerName = owner.name
+      )
+    )
 
   #### Public stuff ####
 
@@ -71,8 +87,11 @@ module.exports = exports = (log, loga, argv) ->
         fs.readFile(idFile, (err, data) ->
           if err then return cb err
           owner = JSON.parse(data)
-          if _.has(owner, 'persona')
-            usingPersona = true
+          # we only enable persona if it is the only owner information.
+          if _.isEmpty(_.intersection(_.keys(owner), ids))
+            if _.has(owner, 'persona')
+              usingPersona = true
+          watchForOwnerChange()
           cb())
       else
         owner = ''
@@ -93,6 +112,7 @@ module.exports = exports = (log, loga, argv) ->
           console.log "Claiming wiki #{wikiName} for #{id}"
           owner = id
           ownerName = owner.name
+          watchForOwnerChange()
           cb())
       else
         cb('Already Claimed')
@@ -113,7 +133,6 @@ module.exports = exports = (log, loga, argv) ->
     else
       try
         idProvider = _.head(_.keys(req.session.passport.user))
-        console.log 'isAuth - idProvider: ', idProvider
         switch idProvider
           when 'github', 'google', 'twitter'
             if _.isEqual(owner[idProvider].id, req.session.passport.user[idProvider].id)
@@ -238,7 +257,6 @@ module.exports = exports = (log, loga, argv) ->
     PersonaStrategy = require('persona-pass').Strategy
 
     personaAudience = callbackProtocol + '//' + callbackHost
-    console.log 'Persona Audience: ', personaAudience
 
     personaStrategyName = callbackHost + 'Persona'
 
@@ -290,8 +308,6 @@ module.exports = exports = (log, loga, argv) ->
 
     app.get '/auth/loginDialog', (req, res) ->
       referer = req.headers.referer
-      console.log "logging into: ", url.parse(referer).hostname
-
       schemeButtons = []
       _(ids).forEach (scheme) ->
         switch scheme
@@ -316,8 +332,6 @@ module.exports = exports = (log, loga, argv) ->
 
     app.get '/auth/personaLogin', (req, res) ->
       referer = req.headers.referer
-      console.log "logging into: ", url.parse(referer).hostname
-
       schemeButtons = []
       if Date.now() < personaEnd
         schemeButtons.push({
@@ -364,11 +378,10 @@ module.exports = exports = (log, loga, argv) ->
       res.render(path.join(__dirname, '..', 'views', 'personaDialog.html'), info)
 
     app.get '/auth/loginDone', (req, res) ->
-      console.log "Done: ", req.session.passport
       referer = req.headers.referer
       if referer is undefined
         referer = ''
-      console.log 'loginDone - referer: ', referer
+
       info = {
         wikiName: if useHttps
           url.parse(referer).hostname
@@ -390,16 +403,11 @@ module.exports = exports = (log, loga, argv) ->
     app.get '/auth/addAuthDialog', (req, res) ->
       # only makes sense to add alternative authentication scheme if
       # this the user is authenticated
-      console.log 'User:', getUser(req)
       if getUser(req)
-
         referer = req.headers.referer
 
-        console.log "User: ", owner
-        currentSchemes = _.keys(owner)
-        console.log "currentSchemes: ", currentSchemes
+        currentSchemes = _.keys(user)
         altSchemes = _.difference(ids, currentSchemes)
-        console.log "altSchemes: ", altSchemes
 
         schemeButtons = []
         _(altSchemes).forEach (scheme) ->
@@ -430,7 +438,7 @@ module.exports = exports = (log, loga, argv) ->
       if isAuthorized(req)
         next()
       else
-        console.log 'rejecting', req.path
+        console.log 'rejecting - not authorized', req.path
         res.sendStatus(403)
 
     app.get '/auth/addAltAuth', authorized, (req, res) ->
@@ -439,10 +447,46 @@ module.exports = exports = (log, loga, argv) ->
 
       user = req.session.passport.user
 
-      console.log 'User: ', user
-      console.log 'Owner: ', owner
-
-      console.log 'In add alt auth...'
+      idProviders = _.keys(user)
+      ids = {}
+      idProviders.forEach (idProvider) ->
+        id = switch idProvider
+          when "twitter" then {
+            name: user.twitter.displayName
+            twitter: {
+              id: user.twitter.id
+              username: user.twitter.username
+            }
+          }
+          when "github" then {
+            name: user.github.displayName
+            github: {
+              id: user.github.id
+              username: user.github.username
+              email: user.github.emails
+            }
+          }
+          when "google" then {
+            name: user.google.displayName
+            google: {
+              id: user.google.id
+              emails: user.google.emails
+            }
+          }
+          # only needed until persona closes
+          when "persona" then {
+            name: user.persona.email
+              .substr(0, user.persona.email.indexOf('@'))
+              .split('.')
+              .join(' ')
+              .toLowerCase()
+              .replace(/(^| )(\w)/g, (x) ->
+                return x.toUpperCase())
+            persona: {
+              email: user.persona.email
+            }
+          }
+        ids = _.merge(ids, id)
 
       wikiDir = path.resolve(argv.data, '..')
       statusDir = argv.status.split(path.sep).slice(-1)[0]
@@ -458,25 +502,22 @@ module.exports = exports = (log, loga, argv) ->
               console.log 'Error reading ', file, err
               return
             siteOwner = JSON.parse(data)
-            console.log file , _.intersectionWith(_.entries(siteOwner), _.entries(user), _.isEqual)
 
             if _.intersectionWith(_.entries(siteOwner), _.entries(user), _.isEqual).length > 0
-              console.log "Site: ", file, "is mine...\n\n"
-              console.log "User:            ", user
-              console.log "Owner (orig):    ", siteOwner
-              updateOwner = _.merge(siteOwner, user)
-              console.log "Owner (updated): ", updateOwner
-            else
-              console.log "Site: ", file, " not mine\n\n"
-
-
-            )
+              updateOwner = _.merge(user, siteOwner)
+              fs.writeFile(path.join(wikiDir, file), JSON.stringify(ids), (err) ->
+                if err
+                  console.log 'Error writing ', file, err
+                # if the write works the change will be picked up by fs.watch() in watchForOwnerChange
+                # so there is nothing more to do here.
+              )
+          )
         )
 
 
     app.get '/auth/claim-wiki', (req, res) ->
       if owner
-        console.log 'Claim Request Ignored: Wiki already has owner'
+        console.log 'Claim Request Ignored: Wiki already has owner - ', wikiName
         res.sendStatus(403)
       else
         user = req.session.passport.user

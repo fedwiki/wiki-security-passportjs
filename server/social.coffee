@@ -251,7 +251,7 @@ module.exports = exports = (log, loga, argv) ->
             displayName: profile.displayName
             emails: profile.emails
           }
-          cb(null, profile)))
+          cb(null, user)))
 
     # Persona Strategy
     PersonaStrategy = require('persona-pass').Strategy

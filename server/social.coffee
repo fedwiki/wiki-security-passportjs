@@ -153,7 +153,7 @@ module.exports = exports = (log, loga, argv) ->
   security.isAdmin = (req) ->
     return false if admin is undefined
     try
-      return false if req.session.passport.user.provider is undefined
+      return false if req.session.passport.user is undefined
     catch
       return false
 

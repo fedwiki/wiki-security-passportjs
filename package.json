@@ -1,16 +1,13 @@
 {
   "name": "wiki-security-passportjs",
   "version": "0.1.0-11",
-  "publishConfig": {
-    "tag": "next"
-  },
   "description": "Security plugin for Federated Wiki, using passport.js",
   "author": "Paul Rodwell <paul.rodwell@btinternet.com> (http://rodwell.me)",
   "license": "MIT",
   "dependencies": {
     "coffee-script": "1.10",
     "es6-promise": "^3.2.1",
-    "lodash": "^4.13.1",
+    "lodash": "^4.15.0",
     "passport": "^0.3.2",
     "passport-github": "^1.1.0",
     "passport-google-oauth20": "^1.0.0",
@@ -26,6 +23,6 @@
     "grunt-contrib-watch": "~1",
     "grunt-git-authors": "^3.2.0",
     "grunt-nsp": "*",
-    "grunt-retire": "^1.0.1"
+    "grunt-retire": "^1.0.3"
   }
 }

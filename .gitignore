@@ -3,5 +3,6 @@ node_modules
 /client/*.js
 /client/*.map
 
-# don't ignore winchan.js
+# don't ignore winchan.js and modernizr-custom.js
 !/client/winchan.js
+!/client/modernizr-custom.js

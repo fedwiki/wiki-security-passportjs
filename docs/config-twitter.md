@@ -7,7 +7,7 @@
 * Login to [Twitter Application Management](https://apps.twitter.com/).
 * Create a new Twitter App, by clicking on **Create New App**.
 ![Twitter Create New App](./images/twitter-new-app.png)
-* Provide your application details. You can either leave the **Callback URL** blank, or if you are only protecting a single wiki domain enter `https://example.wiki/auth/twitter/callback`.
+* Provide your application details. The **Callback URL** should be set with a place holder, for example `https://example.wiki/auth/twitter/callback`.
 ![Twitter App Details](./images/twitter-app-details.png)
 * Agree to the *Developer Agreement* and click **Create your Twitter application**.
 * Once the app has been created, go to the **Settings** tab and check that the **Allow this application to be used to Sign in with Twitter** option is selected.

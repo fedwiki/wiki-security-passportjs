@@ -448,7 +448,7 @@ module.exports = exports = (log, loga, argv) ->
       user = req.session.passport.user
 
       idProviders = _.keys(user)
-      ids = {}
+      userIds = {}
       idProviders.forEach (idProvider) ->
         id = switch idProvider
           when "twitter" then {
@@ -486,7 +486,7 @@ module.exports = exports = (log, loga, argv) ->
               email: user.persona.email
             }
           }
-        ids = _.merge(ids, id)
+        userIds = _.merge(userIds, id)
 
       wikiDir = path.resolve(argv.data, '..')
       statusDir = argv.status.split(path.sep).slice(-1)[0]
@@ -505,7 +505,7 @@ module.exports = exports = (log, loga, argv) ->
 
             if _.intersectionWith(_.entries(siteOwner), _.entries(user), _.isEqual).length > 0
               updateOwner = _.merge(user, siteOwner)
-              fs.writeFile(path.join(wikiDir, file), JSON.stringify(ids), (err) ->
+              fs.writeFile(path.join(wikiDir, file), JSON.stringify(userIds), (err) ->
                 if err
                   console.log 'Error writing ', file, err
                 # if the write works the change will be picked up by fs.watch() in watchForOwnerChange

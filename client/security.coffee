@@ -105,7 +105,19 @@ update_footer = (ownerName, isAuthenticated) ->
                   if response.ok
                     console.log 'Alternative Identity added', response
                     settings.usingPersona = false
-                    update_footer ownerName, isAuthenticated  
+                    if settings.wikiHost
+                      dialogHost = settings.wikiHost
+                    else
+                      dialogHost = window.location.hostname
+                    settings.cookieDomain = dialogHost
+                    if settings.useHttps
+                      dialogProtocol = 'https:'
+                    else
+                      dialogProtocol = window.location.protocol
+                      if window.location.port
+                        dialogHost = dialogHost + ':' + window.location.port
+                    settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/loginDialog'
+                    update_footer ownerName, isAuthenticated
                   else
                     console.log 'Attempt to claim site failed', response
                 )

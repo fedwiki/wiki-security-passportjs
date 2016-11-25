@@ -403,7 +403,8 @@ module.exports = exports = (log, loga, argv) ->
     app.get '/auth/addAuthDialog', (req, res) ->
       # only makes sense to add alternative authentication scheme if
       # this the user is authenticated
-      if getUser(req)
+      user = getUser(req)
+      if user
         referer = req.headers.referer
 
         currentSchemes = _.keys(user)

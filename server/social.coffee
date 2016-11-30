@@ -133,6 +133,7 @@ module.exports = exports = (log, loga, argv) ->
     else
       try
         idProvider = _.head(_.keys(req.session.passport.user))
+        console.log 'idProvider: ', idProvider
         switch idProvider
           when 'github', 'google', 'twitter'
             if _.isEqual(owner[idProvider].id, req.session.passport.user[idProvider].id)

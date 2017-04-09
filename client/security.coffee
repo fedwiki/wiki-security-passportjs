@@ -63,8 +63,7 @@ update_footer = (ownerName, isAuthenticated) ->
       fetch '/logout', myInit
       .then (response) ->
         if response.ok
-          isAuthenticated = false
-          isOwner = false
+          window.isAuthenticated = false
           user = ''
           document.cookie = "state=loggedOut" + ";domain=." + settings.cookieDomain + "; path=/; max-age=60;"
           update_footer ownerName, isAuthenticated
@@ -138,10 +137,12 @@ update_footer = (ownerName, isAuthenticated) ->
         }, (err, r) ->
           if err
             console.log err
-          else if !isClaimed
-            claim_wiki()
           else
-            update_footer ownerName, true)
+            window.isAuthenticated = true
+            if !isClaimed
+              claim_wiki()
+            else
+              update_footer ownerName, true)
 
 
 
@@ -160,8 +161,8 @@ setup = (user) ->
       unless document.cookie.match('(?:^|;)\\s?state=(.*?)(?:;|$)') is null
         try
           switch document.cookie.match('(?:^|;)\\s?state=(.*?)(?:;|$)')[1]
-            when 'loggedIn' then isAuthenticated = true
-            when 'loggedOut' then isAuthenticated = false
+            when 'loggedIn' then window.isAuthenticated = true
+            when 'loggedOut' then window.isAuthenticated = false
           update_footer ownerName, isAuthenticated
       lastCookie = currentCookie
   , 100

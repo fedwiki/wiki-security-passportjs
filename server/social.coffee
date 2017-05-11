@@ -289,7 +289,7 @@ module.exports = exports = (log, loga, argv) ->
       'https://www.googleapis.com/auth/plus.profile.emails.read'
       ]}))
     app.get('/auth/google/callback',
-      passport.authenticate(googleStrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
+      passport.authenticate(googleStrategyName, { prompt: 'select_account', successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
 
     # Persona
     app.post('/auth/browserid',

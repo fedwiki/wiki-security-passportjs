@@ -288,8 +288,9 @@ module.exports = exports = (log, loga, argv) ->
     app.get('/auth/google', passport.authenticate(googleStrategyName, { scope: [
       'https://www.googleapis.com/auth/plus.profile.emails.read'
       ]}))
+    # see https://developers.google.com/identity/protocols/OpenIDConnect#authenticationuriparameters for details of prompt...
     app.get('/auth/google/callback',
-      passport.authenticate(googleStrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
+      passport.authenticate(googleStrategyName, { prompt: 'select_account', successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
 
     # Persona
     app.post('/auth/browserid',

@@ -308,7 +308,7 @@ module.exports = exports = (log, loga, argv) ->
       res.json settings
 
     app.get '/auth/loginDialog', (req, res) ->
-      referer = req.headers.referer
+      cookies = req.cookies
       schemeButtons = []
       _(ids).forEach (scheme) ->
         switch scheme
@@ -317,10 +317,7 @@ module.exports = exports = (log, loga, argv) ->
           when "google" then schemeButtons.push({button: "<a href='/auth/google' class='scheme-button google-button'><span>Google</span></a>"})
 
       info = {
-        wikiName: if useHttps
-          url.parse(referer).hostname
-        else
-          url.parse(referer).host
+        wikiName: cookies['wikiName']
         wikiHostName: if wikiHost
           "part of " + req.hostname + " wiki farm"
         else
@@ -332,7 +329,7 @@ module.exports = exports = (log, loga, argv) ->
       res.render(path.join(__dirname, '..', 'views', 'securityDialog.html'), info)
 
     app.get '/auth/personaLogin', (req, res) ->
-      referer = req.headers.referer
+      cookies = req.cookies
       schemeButtons = []
       if Date.now() < personaEnd
         schemeButtons.push({
@@ -350,10 +347,7 @@ module.exports = exports = (log, loga, argv) ->
                     });
                    </script>"})
         info = {
-          wikiName: if useHttps
-            url.parse(referer).hostname
-          else
-            url.parse(referer).host
+          wikiName: cookies['wikiName']
           wikiHostName: if wikiHost
             "part of " + req.hostname + " wiki farm"
           else
@@ -365,10 +359,7 @@ module.exports = exports = (log, loga, argv) ->
         }
       else
         info = {
-          wikiName: if useHttps
-            url.parse(referer).hostname
-          else
-            url.parse(referer).host
+          wikiName: cookies['wikiName']
           wikiHostName: if wikiHost
             "part of " + req.hostname + " wiki farm"
           else
@@ -379,15 +370,10 @@ module.exports = exports = (log, loga, argv) ->
       res.render(path.join(__dirname, '..', 'views', 'personaDialog.html'), info)
 
     app.get '/auth/loginDone', (req, res) ->
-      referer = req.headers.referer
-      if referer is undefined
-        referer = ''
+      cookies = req.cookies
 
       info = {
-        wikiName: if useHttps
-          url.parse(referer).hostname
-        else
-          url.parse(referer).host
+        wikiName: cookies['wikiName']
         wikiHostName: if wikiHost
           "part of " + req.hostname + " wiki farm"
         else
@@ -406,7 +392,8 @@ module.exports = exports = (log, loga, argv) ->
       # this the user is authenticated
       user = getUser(req)
       if user
-        referer = req.headers.referer
+        cookies = req.cookies
+
 
         currentSchemes = _.keys(user)
         altSchemes = _.difference(ids, currentSchemes)
@@ -419,10 +406,7 @@ module.exports = exports = (log, loga, argv) ->
             when "google" then schemeButtons.push({button: "<a href='/auth/google' class='scheme-button google-button'><span>Google</span></a>"})
 
         info = {
-          wikiName: if useHttps
-            url.parse(referer).hostname
-          else
-            url.parse(referer).host
+          wikiName: cookies['wikiName']
           wikiHostName: if wikiHost
             "part of " + req.hostname + " wiki farm"
           else

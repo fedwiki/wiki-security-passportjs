@@ -82,6 +82,8 @@ update_footer = (ownerName, isAuthenticated) ->
         $('footer > #security > #addAltAuth').click (e) ->
           e.preventDefault
 
+          document.cookie = "wikiName=#{window.location.host}" + ";domain=.#{settings.cookieDomain}; path=/; max-age=300;"
+
           w = WinChan.open({
             url: settings.dialogAddAltURL
             relay_url: settings.relayURL
@@ -128,6 +130,8 @@ update_footer = (ownerName, isAuthenticated) ->
     $('footer > #security').append "<a href='#' id='show-security-dialog' class='footer-item' title='#{signonTitle}'><i class='fa fa-lock fa-lg fa-fw'></i></a>"
     $('footer > #security > #show-security-dialog').click (e) ->
       e.preventDefault()
+
+      document.cookie = "wikiName=#{window.location.host}" + ";domain=.#{settings.cookieDomain}; path=/; max-age=300;"
 
       w = WinChan.open({
         url: settings.dialogURL

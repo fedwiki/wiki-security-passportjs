@@ -387,6 +387,18 @@ module.exports = exports = (log, loga, argv) ->
       }
       res.render(path.join(__dirname, '..', 'views', 'done.html'), info)
 
+    # if configured, enforce restricted access
+    if argv.restricted?
+      app.all('*', (req, res, next) ->
+        # add code here to determine if user should have access to site.
+        #
+        # if access if to be allowed call `next()`
+        #
+        # if access is not allowed display a splash screen,
+        #   this will need a login link that call the same code as clicking on the padlock
+        #
+        )
+
     app.get '/auth/addAuthDialog', (req, res) ->
       # only makes sense to add alternative authentication scheme if
       # this the user is authenticated

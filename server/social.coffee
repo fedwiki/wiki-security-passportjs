@@ -387,17 +387,32 @@ module.exports = exports = (log, loga, argv) ->
       }
       res.render(path.join(__dirname, '..', 'views', 'done.html'), info)
 
-    # if configured, enforce restricted access
+    # if configured, enforce restricted access to json
     if argv.restricted?
-      app.all('*', (req, res, next) ->
-        # add code here to determine if user should have access to site.
-        #
+      app.all '*', (req, res, next) ->
+        return next() unless /\.json$/.test req.url
+
+        # like authorized(req,res,nex) but more universal and adjustable
+        console.log '--------------------------------------------'
+        console.log 'url',req.url
+        console.log 'owner',owner
+        console.log 'owner email',owner.google?.emails
+        console.log 'user',req.session?.passport?.user
+        console.log 'user',req.session?.passport?.user?.google?.emails
+        console.log '--------------------------------------------'
+
         # if access if to be allowed call `next()`
-        #
+
+        if isAuthorized req
+          next()
+
         # if access is not allowed display a splash screen,
         #   this will need a login link that call the same code as clicking on the padlock
-        #
-        )
+
+        else
+          # next()
+          res.status(200).json({title: "Login Required"})
+
 
     app.get '/auth/addAuthDialog', (req, res) ->
       # only makes sense to add alternative authentication scheme if

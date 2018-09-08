@@ -432,12 +432,27 @@ module.exports = exports = (log, loga, argv) ->
         #   this will need a login link that call the same code as clicking on the padlock
 
         else
-          # next()
-          if req.url == '/system/sitemap.json'
-            json = []
+          json = if req.url == '/system/sitemap.json'
+            []
           else
-            json = {title: "Login Required"}
-
+            {
+              "title": "Login Required",
+              "story": [
+                {
+                  "type": "paragraph",
+                  "id": "55d44b367ed64875",
+                  "text": "This is a restricted wiki which requires users to login to view pages. You do not have to be the site owner but you do need to login with a participating email address."
+                },
+                {
+                  "type": "reference",
+                  "id": "08a48446dfc81098",
+                  "site": "path.ward.asia.wiki.org",
+                  "slug": "login-to-view",
+                  "title": "Login to View",
+                  "text": "We imagine controlling visibility of wiki pages on a site or farm similar to operating a server on a private LAN but using distinguished logins rather than network access."
+                }
+              ]
+            }
           res.status(200).json(json)
 
 

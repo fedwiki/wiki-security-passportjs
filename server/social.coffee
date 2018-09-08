@@ -393,18 +393,18 @@ module.exports = exports = (log, loga, argv) ->
       loginToView = (req) ->
         # things = [ { value: 'ward.cunningham@gmail.com', type: 'account' } ]
         allowed = [
+          "dayton.k12.or.us", "stu.dayton.k12.or.us",
+          "newberg.k12.or.us", "stu.newberg.k12.or.us",
           "innovateoregon.org",
-          "newberg.k12.or.us",
           "newrelic.com",
+          "c2.com",
           "andysylvester.com"
         ]
         things = req.session?.passport?.user?.google?.emails
         return false unless things
         for entry in things
           have = entry.value.split('@')[1]
-          console.log 'entry', entry, have
           for want in allowed
-            console.log 'want', want
             return true if want == have
         false
 
@@ -417,7 +417,7 @@ module.exports = exports = (log, loga, argv) ->
         console.log 'owner',owner
         console.log 'owner email',owner.google?.emails
         console.log 'user',req.session?.passport?.user
-        console.log 'user',req.session?.passport?.user?.google?.emails
+        console.log 'user emails',req.session?.passport?.user?.google?.emails
         console.log 'wikiDomains',argv.wikiDomains
         console.log 'wikiHost', wikiHost
         console.log 'argv.wiki_domain', argv.wiki_domain
@@ -598,7 +598,7 @@ module.exports = exports = (log, loga, argv) ->
               }
             }
             when "google" then {
-              name: user.google.displayName
+              name: user.google.displayName || (user.google.emails[0].value.split('@')[0]) || 'unknown'
               google: {
                 id: user.google.id
                 emails: user.google.emails

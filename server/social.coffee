@@ -389,6 +389,25 @@ module.exports = exports = (log, loga, argv) ->
 
     # if configured, enforce restricted access to json
     if argv.restricted?
+
+      loginToView = (req) ->
+        # things = [ { value: 'ward.cunningham@gmail.com', type: 'account' } ]
+        allowed = [
+          "innovateoregon.org",
+          "newberg.k12.or.us",
+          "newrelic.com",
+          "andysylvester.com"
+        ]
+        things = req.session?.passport?.user?.google?.emails
+        return false unless things
+        for entry in things
+          have = entry.value.split('@')[1]
+          console.log 'entry', entry, have
+          for want in allowed
+            console.log 'want', want
+            return true if want == have
+        false
+
       app.all '*', (req, res, next) ->
         return next() unless /\.json$/.test req.url
 
@@ -399,11 +418,14 @@ module.exports = exports = (log, loga, argv) ->
         console.log 'owner email',owner.google?.emails
         console.log 'user',req.session?.passport?.user
         console.log 'user',req.session?.passport?.user?.google?.emails
+        console.log 'wikiDomains',argv.wikiDomains
+        console.log 'wikiHost', wikiHost
+        console.log 'argv.wiki_domain', argv.wiki_domain
         console.log '--------------------------------------------'
 
         # if access if to be allowed call `next()`
 
-        if isAuthorized req
+        if isAuthorized(req) || loginToView(req)
           next()
 
         # if access is not allowed display a splash screen,
@@ -411,7 +433,12 @@ module.exports = exports = (log, loga, argv) ->
 
         else
           # next()
-          res.status(200).json({title: "Login Required"})
+          if req.url == '/system/sitemap.json'
+            json = []
+          else
+            json = {title: "Login Required"}
+
+          res.status(200).json(json)
 
 
     app.get '/auth/addAuthDialog', (req, res) ->

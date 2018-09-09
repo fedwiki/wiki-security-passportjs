@@ -387,73 +387,52 @@ module.exports = exports = (log, loga, argv) ->
       }
       res.render(path.join(__dirname, '..', 'views', 'done.html'), info)
 
+
     # if configured, enforce restricted access to json
+    # see http://ward.asia.wiki.org/login-to-view.html
+
     if argv.restricted?
 
-      loginToView = (req) ->
-        # things = [ { value: 'ward.cunningham@gmail.com', type: 'account' } ]
-        allowed = [
-          "dayton.k12.or.us", "stu.dayton.k12.or.us",
-          "newberg.k12.or.us", "stu.newberg.k12.or.us",
-          "innovateoregon.org",
-          "newrelic.com",
-          "c2.com",
-          "andysylvester.com"
-        ]
-        things = req.session?.passport?.user?.google?.emails
-        return false unless things
-        for entry in things
+      allowedToView = (req) ->
+        allowed = []
+        if argv.allowed_domains?
+          if Array.isArray(argv.allowed_domains)
+            allowed = argv.allowed_domains
+          else
+            # accommodate copy bug to be fixed soon
+            # https://github.com/fedwiki/wiki/blob/4c6eee69e78c1ba3f3fc8d61f4450f70afb78f10/farm.coffee#L98-L103
+            for k, v of argv.allowed_domains
+              allowed.push v
+        # emails = [ { value: 'ward.cunningham@gmail.com', type: 'account' } ]
+        emails = req.session?.passport?.user?.google?.emails
+        return false unless emails
+        for entry in emails
           have = entry.value.split('@')[1]
           for want in allowed
             return true if want == have
         false
 
       app.all '*', (req, res, next) ->
-        return next() unless /\.json$/.test req.url
+        return next() unless /\.(json|html)$/.test req.url
+        return next() if isAuthorized(req) || allowedToView(req)
+        return res.redirect("/view/#{m[1]}") if m = req.url.match /\/(.*)\.html/
+        return res.json([]) if req.url == '/system/sitemap.json'
 
-        # like authorized(req,res,nex) but more universal and adjustable
-        console.log '--------------------------------------------'
-        console.log 'url',req.url
-        console.log 'owner',owner
-        console.log 'owner email',owner.google?.emails
-        console.log 'user',req.session?.passport?.user
-        console.log 'user emails',req.session?.passport?.user?.google?.emails
-        console.log 'wikiDomains',argv.wikiDomains
-        console.log 'wikiHost', wikiHost
-        console.log 'argv.wiki_domain', argv.wiki_domain
-        console.log '--------------------------------------------'
-
-        # if access if to be allowed call `next()`
-
-        if isAuthorized(req) || loginToView(req)
-          next()
-
-        # if access is not allowed display a splash screen,
-        #   this will need a login link that call the same code as clicking on the padlock
-
-        else
-          json = if req.url == '/system/sitemap.json'
-            []
-          else
-            {
-              "title": "Login Required",
-              "story": [
-                {
-                  "type": "paragraph",
-                  "id": "55d44b367ed64875",
-                  "text": "This is a restricted wiki which requires users to login to view pages. You do not have to be the site owner but you do need to login with a participating email address."
-                },
-                {
-                  "type": "reference",
-                  "id": "08a48446dfc81098",
-                  "site": "path.ward.asia.wiki.org",
-                  "slug": "login-to-view",
-                  "title": "Login to View",
-                  "text": "We imagine controlling visibility of wiki pages on a site or farm similar to operating a server on a private LAN but using distinguished logins rather than network access."
-                }
-              ]
-            }
-          res.status(200).json(json)
+        # explain why these pages can't be viewed
+        problem = "This is a restricted wiki requires users to login to view pages. You do not have to be the site owner but you do need to login with a participating email address."
+        details = "[#{argv.details || 'http://ward.asia.wiki.org/login-to-view.html'} details]"
+        res.status(200).json(
+          {
+            "title": "Login Required",
+            "story": [
+              {
+                "type": "paragraph",
+                "id": "55d44b367ed64875",
+                "text": "#{problem} #{details}"
+              }
+            ]
+          }
+        )
 
 
     app.get '/auth/addAuthDialog', (req, res) ->
@@ -598,7 +577,7 @@ module.exports = exports = (log, loga, argv) ->
               }
             }
             when "google" then {
-              name: user.google.displayName || (user.google.emails[0].value.split('@')[0]) || 'unknown'
+              name: user.google.displayName || (user.google.emails[0]?.value?.split('@')[0]) || 'unknown'
               google: {
                 id: user.google.id
                 emails: user.google.emails

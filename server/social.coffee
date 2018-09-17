@@ -413,12 +413,17 @@ module.exports = exports = (log, loga, argv) ->
         false
 
       app.all '*', (req, res, next) ->
+        # todo: think about assets??
         return next() unless /\.(json|html)$/.test req.url
+
+        # prepare to examine remote server's forwarded session
+        res.header 'Access-Control-Allow-Origin', req.get('Origin')||'*'
+        res.header 'Access-Control-Allow-Credentials', 'true'
         return next() if isAuthorized(req) || allowedToView(req)
         return res.redirect("/view/#{m[1]}") if m = req.url.match /\/(.*)\.html/
         return res.json([]) if req.url == '/system/sitemap.json'
 
-        # explain why these pages can't be viewed
+        # not happy, explain why these pages can't be viewed
         problem = "This is a restricted wiki requires users to login to view pages. You do not have to be the site owner but you do need to login with a participating email address."
         details = "[#{argv.details || 'http://ward.asia.wiki.org/login-to-view.html'} details]"
         res.status(200).json(

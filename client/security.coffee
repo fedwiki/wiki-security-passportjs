@@ -173,7 +173,16 @@ setup = (user) ->
           switch document.cookie.match('(?:^|;)\\s?state=(.*?)(?:;|$)')[1]
             when 'loggedIn' then window.isAuthenticated = true
             when 'loggedOut' then window.isAuthenticated = false
-          update_footer ownerName, isAuthenticated
+          myInit = {
+            method: 'GET'
+            cache: 'no-cache'
+            mode: 'same-origin'
+          }
+          fetch '/auth/client-settings.json', myInit
+          .then (response) ->
+            response.json().then (json) ->
+              window.isOwner = json.isOwner
+              update_footer ownerName, isAuthenticated
       lastCookie = currentCookie
   , 100
 

@@ -306,6 +306,10 @@ module.exports = exports = (log, loga, argv) ->
       }
       if wikiHost
         settings.wikiHost = wikiHost
+      if isAuthorized(req) and owner isnt ''
+        settings.isOwner = true
+      else
+        settings.isOwner = false
       res.json settings
 
     app.get '/auth/loginDialog', (req, res) ->

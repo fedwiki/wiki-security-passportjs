@@ -133,6 +133,7 @@ module.exports = exports = (log, loga, argv) ->
     else
       try
         idProvider = _.head(_.keys(req.session.passport.user))
+        console.log 'idProvider: ', idProvider
         switch idProvider
           when 'github', 'google', 'twitter'
             if _.isEqual(owner[idProvider].id, req.session.passport.user[idProvider].id)
@@ -305,6 +306,10 @@ module.exports = exports = (log, loga, argv) ->
       }
       if wikiHost
         settings.wikiHost = wikiHost
+      if isAuthorized(req) and owner isnt ''
+        settings.isOwner = true
+      else
+        settings.isOwner = false
       res.json settings
 
     app.get '/auth/loginDialog', (req, res) ->

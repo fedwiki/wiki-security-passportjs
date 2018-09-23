@@ -51,7 +51,13 @@ update_footer = (ownerName, isAuthenticated) ->
   $('footer > #security').empty()
 
   if isAuthenticated
-    $('footer > #security').append "<a href='#' id='logout' class='footer-item' title='Sign-out'><i class='fa fa-unlock fa-lg fa-fw'></i></a>"
+    if isOwner
+      logoutTitle = "Sign-out"
+      logoutIconClass = 'fa fa-unlock fa-lg fa-fw'
+    else
+      logoutTitle = "Not Owner : Sign-out"
+      logoutIconClass = 'fa fa-lock fa-lg fa-fw notOwner'
+    $('footer > #security').append "<a href='#' id='logout' class='footer-item' title='#{logoutTitle}'><i class='#{logoutIconClass}'></i></a>"
     $('footer > #security > #logout').click (e) ->
       e.preventDefault()
       myInit = {
@@ -167,7 +173,16 @@ setup = (user) ->
           switch document.cookie.match('(?:^|;)\\s?state=(.*?)(?:;|$)')[1]
             when 'loggedIn' then window.isAuthenticated = true
             when 'loggedOut' then window.isAuthenticated = false
-          update_footer ownerName, isAuthenticated
+          myInit = {
+            method: 'GET'
+            cache: 'no-cache'
+            mode: 'same-origin'
+          }
+          fetch '/auth/client-settings.json', myInit
+          .then (response) ->
+            response.json().then (json) ->
+              window.isOwner = json.isOwner
+              update_footer ownerName, isAuthenticated
       lastCookie = currentCookie
   , 100
 

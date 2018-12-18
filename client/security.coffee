@@ -93,7 +93,7 @@ update_footer = (ownerName, isAuthenticated) ->
           w = WinChan.open({
             url: settings.dialogAddAltURL
             relay_url: settings.relayURL
-            window_features: "menubar=0, location=0, resizable=0, scrollbars=0, status=0, dialog=1, width=700, height=375"
+            window_features: "menubar=0, location=0, resizable=0, scrollbars=1, status=0, dialog=1, width=700, height=375"
             params: {}
             }, (err, r) ->
               if err
@@ -142,7 +142,7 @@ update_footer = (ownerName, isAuthenticated) ->
       w = WinChan.open({
         url: settings.dialogURL
         relay_url: settings.relayURL
-        window_features: "menubar=0, location=0, resizable=0, scrollbars=0, status=0, dialog=1, width=700, height=375"
+        window_features: "menubar=0, location=0, resizable=0, scrollbars=1, status=0, dialog=1, width=700, height=375"
         params: {}
         }, (err, r) ->
           if err

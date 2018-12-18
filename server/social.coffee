@@ -319,7 +319,16 @@ module.exports = exports = (log, loga, argv) ->
         switch scheme
           when "twitter" then schemeButtons.push({button: "<a href='/auth/twitter' class='scheme-button twitter-button'><span>Twitter</span></a>"})
           when "github" then schemeButtons.push({button: "<a href='/auth/github' class='scheme-button github-button'><span>Github</span></a>"})
-          when "google" then schemeButtons.push({button: "<a href='/auth/google' class='scheme-button google-button'><span>Google</span></a>"})
+          when "google"
+            schemeButtons.push({button: "<a href='#' id='google' class='scheme-button google-button'><span>Google</span></a>
+              <script>
+                googleButton = document.getElementById('google');
+                googleButton.onclick = function(event) {
+                  window.resizeBy(0, +300);
+                  window.location = '/auth/google';
+                }
+              </script>"})
+
 
       info = {
         wikiName: cookies['wikiName']

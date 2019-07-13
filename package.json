@@ -5,23 +5,23 @@
   "author": "Paul Rodwell <paul.rodwell@btinternet.com> (http://rodwell.me)",
   "license": "MIT",
   "dependencies": {
-    "coffeescript": "^2.3.2",
-    "es6-promise": "^4.2.5",
-    "lodash": "^4.17.11",
+    "coffeescript": "^2.4.1",
+    "es6-promise": "^4.2.8",
+    "lodash": "^4.17.14",
     "passport": "^0.3.2",
     "passport-github": "^1.1.0",
     "passport-google-oauth20": "^1.0.0",
     "passport-twitter": "^1.0.4",
     "persona-pass": "^0.2.1",
-    "qs": "^6.6.0",
+    "qs": "^6.7.0",
     "whatwg-fetch": "^3.0.0"
   },
   "devDependencies": {
     "coffeeify": "^3.0.1",
-    "grunt": "^1.0.1",
+    "grunt": "^1.0.4",
     "grunt-browserify": "^5.2.0",
     "grunt-contrib-watch": "^1.0.0",
     "grunt-git-authors": "^3.2.0",
-    "grunt-retire": "^1.0.7"
+    "grunt-retire": "^1.0.8"
   }
 }

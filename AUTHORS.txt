@@ -1,0 +1,5 @@
+Authors ordered by first contribution
+
+Paul Rodwell <paul.rodwell@btinternet.com>
+Ward Cunningham <ward@c2.com>
+Marc-Antoine Parent <maparent@acm.org>

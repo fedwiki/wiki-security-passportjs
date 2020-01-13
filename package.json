@@ -10,7 +10,7 @@
     "lodash": "^4.17.14",
     "passport": "^0.3.2",
     "passport-github": "^1.1.0",
-    "passport-google-oauth20": "^1.0.0",
+    "passport-google-oauth20": "^2.0.0",
     "passport-twitter": "^1.0.4",
     "persona-pass": "^0.2.1",
     "qs": "^6.7.0",
@@ -23,5 +23,12 @@
     "grunt-contrib-watch": "^1.0.0",
     "grunt-git-authors": "^3.2.0",
     "grunt-retire": "^1.0.8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fedwiki/wiki-security-passportjs"
+  },
+  "bugs": {
+    "url": "https://github.com/fedwiki/wiki-security-passportjs/issues"
   }
 }

@@ -287,7 +287,7 @@ module.exports = exports = (log, loga, argv) ->
 
     # Google
     app.get('/auth/google', passport.authenticate(googleStrategyName, { scope: [
-      'https://www.googleapis.com/auth/plus.profile.emails.read'
+      'profile', 'email'
       ]}))
     # see https://developers.google.com/identity/protocols/OpenIDConnect#authenticationuriparameters for details of prompt...
     app.get('/auth/google/callback',

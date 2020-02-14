@@ -629,6 +629,13 @@ module.exports = exports = (log, loga, argv) ->
               ownerName: id.name
               })
 
+    app.get '/auth/diag', authorized, (req, res) ->
+      # some diagnostic feedback to the user, for when something strange happens
+      user = req.session.passport.user
+      date = new Date().toString()
+      wikiName = new URL(argv.url).hostname
+      console.log 'SOCIAL *** ', date, ' *** ', wikiName, ' *** ', JSON.stringify(user)
+      res.json date
 
     app.get '/logout', (req, res) ->
       console.log 'Logout...'

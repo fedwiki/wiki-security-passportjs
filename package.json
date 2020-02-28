@@ -9,7 +9,7 @@
     "es6-promise": "^4.2.8",
     "lodash": "^4.17.14",
     "passport": "^0.3.2",
-    "passport-github": "^1.1.0",
+    "passport-github": "FedWiki/passport-github#70fe99ba7e66422092a19d89f4b1ab1a23eac644",
     "passport-google-oauth20": "^2.0.0",
     "passport-twitter": "^1.0.4",
     "persona-pass": "^0.2.1",

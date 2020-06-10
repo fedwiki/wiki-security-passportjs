@@ -206,6 +206,7 @@ setup = (user) ->
     .then (response) ->
       if response.ok
         response.json().then (json) ->
+          window.isOwner = json.isOwner
           settings = json
           if settings.wikiHost
             dialogHost = settings.wikiHost

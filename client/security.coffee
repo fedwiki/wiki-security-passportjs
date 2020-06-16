@@ -36,6 +36,7 @@ claim_wiki = () ->
         response.json().then (json) ->
           ownerName = json.ownerName
           window.isClaimed = true
+          window.isOwner = true
           update_footer ownerName, true
       else
         console.log 'Attempt to claim site failed', response

@@ -72,7 +72,7 @@ update_footer = (ownerName, isAuthenticated) ->
         if response.ok
           window.isAuthenticated = false
           user = ''
-          document.cookie = "state=loggedOut" + ";domain=." + settings.cookieDomain + "; path=/; max-age=60;"
+          document.cookie = "state=loggedOut" + ";domain=." + settings.cookieDomain + "; path=/; max-age=60; sameSite=Strict;"
           update_footer ownerName, isAuthenticated
         else
           console.log 'logout failed: ', response
@@ -89,7 +89,7 @@ update_footer = (ownerName, isAuthenticated) ->
         $('footer > #security > #addAltAuth').click (e) ->
           e.preventDefault
 
-          document.cookie = "wikiName=#{window.location.host}" + ";domain=.#{settings.cookieDomain}; path=/; max-age=300;"
+          document.cookie = "wikiName=#{window.location.host}" + ";domain=.#{settings.cookieDomain}; path=/; max-age=300; sameSite=Strict;"
 
           w = WinChan.open({
             url: settings.dialogAddAltURL
@@ -138,7 +138,7 @@ update_footer = (ownerName, isAuthenticated) ->
     $('footer > #security > #show-security-dialog').click (e) ->
       e.preventDefault()
 
-      document.cookie = "wikiName=#{window.location.host}" + ";domain=.#{settings.cookieDomain}; path=/; max-age=300;"
+      document.cookie = "wikiName=#{window.location.host}" + ";domain=.#{settings.cookieDomain}; path=/; max-age=300; sameSite=Strict;"
 
       w = WinChan.open({
         url: settings.dialogURL

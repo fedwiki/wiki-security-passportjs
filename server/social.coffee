@@ -135,7 +135,7 @@ module.exports = exports = (log, loga, argv) ->
         idProvider = _.head(_.keys(req.session.passport.user))
         console.log 'idProvider: ', idProvider
         switch idProvider
-          when 'github', 'google', 'twitter'
+          when 'github', 'google', 'twitter', 'oauth2'
             if _.isEqual(owner[idProvider].id, req.session.passport.user[idProvider].id)
               return true
             else
@@ -165,7 +165,7 @@ module.exports = exports = (log, loga, argv) ->
       return false
 
     switch idProvider
-      when "github", "google", "twitter"
+      when "github", "google", "twitter", 'oauth2'
         if _.isEqual(admin[idProvider], req.session.passport.user[idProvider].id)
           return true
         else
@@ -193,6 +193,32 @@ module.exports = exports = (log, loga, argv) ->
 
     passport.deserializeUser = (obj, req, done) ->
       done(null, obj)
+
+    # OAuth Strategy
+    if argv.oauth2_clientID? and argv.oauth2_clientSecret?
+      ids.push('oauth2')
+      OAuth2Strategy = require('passport-oauth2').Strategy
+
+      oauth2StrategyName = callbackHost + 'OAuth'
+
+      passport.use(oauth2StrategyName, new OAuth2Strategy({
+        clientID: argv.oauth2_clientID
+        clientSecret: argv.oauth2_clientSecret
+        authorizationURL: argv.oauth2_AuthorizationURL
+        tokenURL: argv.oauth2_TokenURL
+        # userURL: argv.oauth2_UserURL
+        # scope: 'user:emails'
+        # callbackURL is optional, and if it exists must match that given in
+        # the OAuth application settings - so we don't specify it.
+        }, (accessToken, refreshToken, params, profile, cb) ->
+          console.log("params", params)
+          console.log("profile", profile)
+          user.oauth2 = {
+            id: params.user_id,
+            username: params.user_id,
+            displayName: params.user_id,
+          }
+          cb(null, user)))
 
     # Github Strategy
     if argv.github_clientID? and argv.github_clientSecret?
@@ -275,6 +301,11 @@ module.exports = exports = (log, loga, argv) ->
     app.use(passport.initialize())
     app.use(passport.session())
 
+    # OAuth2
+    app.get('/auth/oauth2', passport.authenticate(oauth2StrategyName), (req, res) -> )
+    app.get('/auth/oauth2/callback',
+      passport.authenticate(oauth2StrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
+
     # Github
     app.get('/auth/github', passport.authenticate(githubStrategyName, {scope: 'user:email'}), (req, res) -> )
     app.get('/auth/github/callback',
@@ -317,6 +348,7 @@ module.exports = exports = (log, loga, argv) ->
       schemeButtons = []
       _(ids).forEach (scheme) ->
         switch scheme
+          when "oauth2" then schemeButtons.push({button: "<a href='/auth/oauth2' class='scheme-button oauth2-button'><span>OAuth2</span></a>"})
           when "twitter" then schemeButtons.push({button: "<a href='/auth/twitter' class='scheme-button twitter-button'><span>Twitter</span></a>"})
           when "github" then schemeButtons.push({button: "<a href='/auth/github' class='scheme-button github-button'><span>Github</span></a>"})
           when "google"
@@ -504,6 +536,13 @@ module.exports = exports = (log, loga, argv) ->
       userIds = {}
       idProviders.forEach (idProvider) ->
         id = switch idProvider
+          when "oauth2" then {
+            name: user.oauth2.displayName
+            oauth2: {
+              id: user.oauth2.id
+              username: user.oauth2.username
+            }
+          }
           when "twitter" then {
             name: user.twitter.displayName
             twitter: {
@@ -580,6 +619,13 @@ module.exports = exports = (log, loga, argv) ->
         id = {}
         idProviders.forEach (idProvider) ->
           id = switch idProvider
+            when "oauth2" then {
+              name: user.oauth2.displayName
+              oauth2: {
+                id: user.oauth2.id
+                username: user.oauth2.username
+              }
+            }
             when "twitter" then {
               name: user.twitter.displayName
               twitter: {

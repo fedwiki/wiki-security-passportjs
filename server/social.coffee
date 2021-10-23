@@ -201,23 +201,42 @@ module.exports = exports = (log, loga, argv) ->
 
       oauth2StrategyName = callbackHost + 'OAuth'
 
+      if argv.oauth2_UserInfoURL?
+        OAuth2Strategy::userProfile = (accesstoken, done) -> 
+          console.log "hello"
+          console.log accesstoken
+          @_oauth2._request "GET", argv.oauth2_UserInfoURL, null, null, accesstoken, (err, data) ->
+            if err
+              return done err 
+            try
+              data = JSON.parse data 
+            catch e
+              return done e
+            done(null, data)
+
       passport.use(oauth2StrategyName, new OAuth2Strategy({
         clientID: argv.oauth2_clientID
         clientSecret: argv.oauth2_clientSecret
         authorizationURL: argv.oauth2_AuthorizationURL
-        tokenURL: argv.oauth2_TokenURL
-        # userURL: argv.oauth2_UserURL
-        # scope: 'user:emails'
-        # callbackURL is optional, and if it exists must match that given in
-        # the OAuth application settings - so we don't specify it.
+        tokenURL: argv.oauth2_TokenURL,
+        # not all providers have a way of specifying the callback URL
+        callbackURL: argv.oauth2_CallbackURL,
+        userInfoURL: argv.oauth2_UserInfoURL
         }, (accessToken, refreshToken, params, profile, cb) ->
+          console.log("accessToken", accessToken)
+          console.log("refreshToken", refreshToken)
           console.log("params", params)
           console.log("profile", profile)
+          if argv.oauth2_UsernameField?
+            username_query = argv.oauth2_UsernameField 
+          else 
+            username_query = 'params.user_id'
           user.oauth2 = {
-            id: params.user_id,
-            username: params.user_id,
-            displayName: params.user_id,
+            id: eval username_query,
+            username: eval username_query
+            displayName: eval username_query
           }
+          console.log user.oauth2
           cb(null, user)))
 
     # Github Strategy

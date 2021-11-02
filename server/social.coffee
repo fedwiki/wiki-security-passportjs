@@ -223,6 +223,26 @@ module.exports = exports = (log, loga, argv) ->
         callbackURL: argv.oauth2_CallbackURL,
         userInfoURL: argv.oauth2_UserInfoURL
         }, (accessToken, refreshToken, params, profile, cb) ->
+
+          extractUserInfo = (uiParam, uiDef) ->
+            uiPath = ''
+            if typeof uiParam == 'undefined' then (uiPath = uiDef) else (uiPath = uiParam)
+            console.log('extractUI', uiParam, uiDef, uiPath)
+            sParts = uiPath.split('.')
+            sFrom = sParts.shift()
+            switch sFrom
+              when "params"
+                obj = params
+              when "profile"
+                obj = profile
+              else
+                console.error('*** source of user info not recognised', uiPath)
+                obj = {}
+            
+            while (sParts.length)
+              obj = obj[sParts.shift()]
+            return obj
+
           console.log("accessToken", accessToken)
           console.log("refreshToken", refreshToken)
           console.log("params", params)
@@ -231,11 +251,15 @@ module.exports = exports = (log, loga, argv) ->
             username_query = argv.oauth2_UsernameField 
           else 
             username_query = 'params.user_id'
-          user.oauth2 = {
-            id: eval username_query,
-            username: eval username_query
-            displayName: eval username_query
-          }
+
+          try
+            user.oauth2 = {
+              id: extractUserInfo(argv.oauth2_IdField, 'params.user_id')
+              username: extractUserInfo(argv.oauth2_UsernameField, 'params.user_id')
+              displayName: extractUserInfo(argv.oauth2_DisplayNameField, 'params.user_id')
+            }
+          catch e
+            console.error('*** Error extracting user info:', e)
           console.log user.oauth2
           cb(null, user)))
 

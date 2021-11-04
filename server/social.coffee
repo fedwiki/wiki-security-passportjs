@@ -220,7 +220,7 @@ module.exports = exports = (log, loga, argv) ->
         authorizationURL: argv.oauth2_AuthorizationURL
         tokenURL: argv.oauth2_TokenURL,
         # not all providers have a way of specifying the callback URL
-        callbackURL: argv.oauth2_CallbackURL,
+        callbackURL: callbackProtocol + '//' + callbackHost + '/auth/oauth2/callback',
         userInfoURL: argv.oauth2_UserInfoURL
         }, (accessToken, refreshToken, params, profile, cb) ->
 

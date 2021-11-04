@@ -54,7 +54,6 @@ Sometimes, you'll be able to look up the URLs by visiting your provider's
   "oauth2_AuthorizationURL": "https://auth.example.com/auth/realms/Wiki.Cafe/protocol/openid-connect/auth",
   "oauth2_TokenURL": "https://auth.example.com/auth/realms/Wiki.Cafe/protocol/openid-connect/token",
   "oauth2_UserInfoURL": "https://auth.example.com/auth/realms/Wiki.Cafe/protocol/openid-connect/userinfo",
-  "oauth2_CallbackURL": "http://localhost:3000/auth/oauth2/callback",
   "oauth2_UsernameField": "profile.preferred_username"
 }
 ```

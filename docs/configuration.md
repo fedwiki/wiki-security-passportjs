@@ -17,3 +17,4 @@ See, depending on which identity provider you choose to use:
 * [GitHub](./config-github.md)
 * [Google](./config-google.md)
 * [Twitter](./config-twitter.md)
+* [Generic OAuth](./config-oauth2.md)

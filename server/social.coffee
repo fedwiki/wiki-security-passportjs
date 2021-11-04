@@ -135,7 +135,7 @@ module.exports = exports = (log, loga, argv) ->
         idProvider = _.head(_.keys(req.session.passport.user))
         console.log 'idProvider: ', idProvider
         switch idProvider
-          when 'github', 'google', 'twitter'
+          when 'github', 'google', 'twitter', 'oauth2'
             if _.isEqual(owner[idProvider].id, req.session.passport.user[idProvider].id)
               return true
             else
@@ -165,7 +165,7 @@ module.exports = exports = (log, loga, argv) ->
       return false
 
     switch idProvider
-      when "github", "google", "twitter"
+      when "github", "google", "twitter", 'oauth2'
         if _.isEqual(admin[idProvider], req.session.passport.user[idProvider].id)
           return true
         else
@@ -193,6 +193,75 @@ module.exports = exports = (log, loga, argv) ->
 
     passport.deserializeUser = (obj, req, done) ->
       done(null, obj)
+
+    # OAuth Strategy
+    if argv.oauth2_clientID? and argv.oauth2_clientSecret?
+      ids.push('oauth2')
+      OAuth2Strategy = require('passport-oauth2').Strategy
+
+      oauth2StrategyName = callbackHost + 'OAuth'
+
+      if argv.oauth2_UserInfoURL?
+        OAuth2Strategy::userProfile = (accesstoken, done) -> 
+          console.log "hello"
+          console.log accesstoken
+          @_oauth2._request "GET", argv.oauth2_UserInfoURL, null, null, accesstoken, (err, data) ->
+            if err
+              return done err 
+            try
+              data = JSON.parse data 
+            catch e
+              return done e
+            done(null, data)
+
+      passport.use(oauth2StrategyName, new OAuth2Strategy({
+        clientID: argv.oauth2_clientID
+        clientSecret: argv.oauth2_clientSecret
+        authorizationURL: argv.oauth2_AuthorizationURL
+        tokenURL: argv.oauth2_TokenURL,
+        # not all providers have a way of specifying the callback URL
+        callbackURL: callbackProtocol + '//' + callbackHost + '/auth/oauth2/callback',
+        userInfoURL: argv.oauth2_UserInfoURL
+        }, (accessToken, refreshToken, params, profile, cb) ->
+
+          extractUserInfo = (uiParam, uiDef) ->
+            uiPath = ''
+            if typeof uiParam == 'undefined' then (uiPath = uiDef) else (uiPath = uiParam)
+            console.log('extractUI', uiParam, uiDef, uiPath)
+            sParts = uiPath.split('.')
+            sFrom = sParts.shift()
+            switch sFrom
+              when "params"
+                obj = params
+              when "profile"
+                obj = profile
+              else
+                console.error('*** source of user info not recognised', uiPath)
+                obj = {}
+            
+            while (sParts.length)
+              obj = obj[sParts.shift()]
+            return obj
+
+          console.log("accessToken", accessToken)
+          console.log("refreshToken", refreshToken)
+          console.log("params", params)
+          console.log("profile", profile)
+          if argv.oauth2_UsernameField?
+            username_query = argv.oauth2_UsernameField 
+          else 
+            username_query = 'params.user_id'
+
+          try
+            user.oauth2 = {
+              id: extractUserInfo(argv.oauth2_IdField, 'params.user_id')
+              username: extractUserInfo(argv.oauth2_UsernameField, 'params.user_id')
+              displayName: extractUserInfo(argv.oauth2_DisplayNameField, 'params.user_id')
+            }
+          catch e
+            console.error('*** Error extracting user info:', e)
+          console.log user.oauth2
+          cb(null, user)))
 
     # Github Strategy
     if argv.github_clientID? and argv.github_clientSecret?
@@ -275,6 +344,11 @@ module.exports = exports = (log, loga, argv) ->
     app.use(passport.initialize())
     app.use(passport.session())
 
+    # OAuth2
+    app.get('/auth/oauth2', passport.authenticate(oauth2StrategyName), (req, res) -> )
+    app.get('/auth/oauth2/callback',
+      passport.authenticate(oauth2StrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
+
     # Github
     app.get('/auth/github', passport.authenticate(githubStrategyName, {scope: 'user:email'}), (req, res) -> )
     app.get('/auth/github/callback',
@@ -317,6 +391,7 @@ module.exports = exports = (log, loga, argv) ->
       schemeButtons = []
       _(ids).forEach (scheme) ->
         switch scheme
+          when "oauth2" then schemeButtons.push({button: "<a href='/auth/oauth2' class='scheme-button oauth2-button'><span>OAuth2</span></a>"})
           when "twitter" then schemeButtons.push({button: "<a href='/auth/twitter' class='scheme-button twitter-button'><span>Twitter</span></a>"})
           when "github" then schemeButtons.push({button: "<a href='/auth/github' class='scheme-button github-button'><span>Github</span></a>"})
           when "google"
@@ -504,6 +579,13 @@ module.exports = exports = (log, loga, argv) ->
       userIds = {}
       idProviders.forEach (idProvider) ->
         id = switch idProvider
+          when "oauth2" then {
+            name: user.oauth2.displayName
+            oauth2: {
+              id: user.oauth2.id
+              username: user.oauth2.username
+            }
+          }
           when "twitter" then {
             name: user.twitter.displayName
             twitter: {
@@ -580,6 +662,13 @@ module.exports = exports = (log, loga, argv) ->
         id = {}
         idProviders.forEach (idProvider) ->
           id = switch idProvider
+            when "oauth2" then {
+              name: user.oauth2.displayName
+              oauth2: {
+                id: user.oauth2.id
+                username: user.oauth2.username
+              }
+            }
             when "twitter" then {
               name: user.twitter.displayName
               twitter: {

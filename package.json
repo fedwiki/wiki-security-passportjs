@@ -9,7 +9,7 @@
     "es6-promise": "^4.2.8",
     "lodash": "^4.17.19",
     "passport": "^0.3.2",
-    "passport-github": "github:FedWiki/passport-github#70fe99ba7e66422092a19d89f4b1ab1a23eac644",
+    "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
     "passport-oauth2": "^1.6.1",
     "passport-twitter": "^1.0.4",
@@ -20,7 +20,7 @@
   "devDependencies": {
     "coffeeify": "^3.0.1",
     "grunt": "^1.2.1",
-    "grunt-browserify": "^5.2.0",
+    "grunt-browserify": "^6.0.0",
     "grunt-contrib-watch": "^1.0.0",
     "grunt-git-authors": "^3.2.0",
     "grunt-retire": "^1.0.8"

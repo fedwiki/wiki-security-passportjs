@@ -266,7 +266,7 @@ module.exports = exports = (log, loga, argv) ->
     # Github Strategy
     if argv.github_clientID? and argv.github_clientSecret?
       ids.push('github')
-      GithubStrategy = require('passport-github').Strategy
+      GithubStrategy = require('passport-github2').Strategy
 
       githubStrategyName = callbackHost + 'Github'
 

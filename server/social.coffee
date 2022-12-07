@@ -53,6 +53,8 @@ module.exports = exports = (log, loga, argv) ->
     if argv.oauth2_CallbackPort?
       callbackHost = callbackHost + ":" + argv.oauth2_CallbackPort
 
+  console.log "callbackHost", callbackHost
+
   ids = []
 
   #### Public stuff ####
@@ -133,7 +135,7 @@ module.exports = exports = (log, loga, argv) ->
       return false
 
     switch idProvider
-      when "github", "google", "twitter", 'oauth2'
+      when "github", "google", "twitter", "oauth2"
         if _.isEqual(admin[idProvider], req.session.passport.user[idProvider].id)
           return true
         else
@@ -163,12 +165,13 @@ module.exports = exports = (log, loga, argv) ->
       OAuth2Strategy = require('passport-oauth2').Strategy
 
       oauth2StrategyName = callbackHost + 'OAuth'
+      console.log "callbackHost", callbackHost
 
       if argv.oauth2_UserInfoURL?
         OAuth2Strategy::userProfile = (accesstoken, done) -> 
-          console.log "hello"
-          console.log accesstoken
           @_oauth2._request "GET", argv.oauth2_UserInfoURL, null, null, accesstoken, (err, data) ->
+            console.log "data", data
+            console.log "err", err
             if err
               return done err 
             try

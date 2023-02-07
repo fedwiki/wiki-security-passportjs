@@ -357,10 +357,7 @@ module.exports = exports = (log, loga, argv) ->
     # Twitter
     app.get('/auth/twitter', passport.authenticate(twitterStrategyName), (req, res) -> )
     app.get('/auth/twitter/callback',
-      passport.authenticate(twitterStrategyName, { failureRedirect: '/auth/loginDialog'}),
-      (req, res) -> 
-        res.redirect('/auth/loginDone')
-      )
+      passport.authenticate(twitterStrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
 
     # Google
     app.get('/auth/google', passport.authenticate(googleStrategyName, { scope: [

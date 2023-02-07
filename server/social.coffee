@@ -288,7 +288,7 @@ module.exports = exports = (log, loga, argv) ->
     # Twitter Strategy
     if argv.twitter_consumerKey? and argv.twitter_consumerSecret?
       ids.push('twitter')
-      TwitterStrategy = require('passport-twitter').Strategy
+      TwitterStrategy = require('@passport-js/passport-twitter').Strategy
 
       twitterStrategyName = callbackHost + 'Twitter'
 
@@ -357,7 +357,10 @@ module.exports = exports = (log, loga, argv) ->
     # Twitter
     app.get('/auth/twitter', passport.authenticate(twitterStrategyName), (req, res) -> )
     app.get('/auth/twitter/callback',
-      passport.authenticate(twitterStrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
+      passport.authenticate(twitterStrategyName, { failureRedirect: '/auth/loginDialog'}),
+      (req, res) -> 
+        res.redirect('/auth/loginDone')
+      )
 
     # Google
     app.get('/auth/google', passport.authenticate(googleStrategyName, { scope: [

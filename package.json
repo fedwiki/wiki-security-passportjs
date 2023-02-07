@@ -5,6 +5,7 @@
   "author": "Paul Rodwell <paul.rodwell@btinternet.com> (http://rodwell.me)",
   "license": "MIT",
   "dependencies": {
+    "@passport-js/passport-twitter": "^1.0.8",
     "coffeescript": "^2.4.1",
     "es6-promise": "^4.2.8",
     "lodash": "^4.17.19",
@@ -12,7 +13,6 @@
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
     "passport-oauth2": "^1.6.1",
-    "passport-twitter": "github:paul90/passport-twitter#48b52556f48e4e8f7c55288baaf3ba3076eeba16",
     "persona-pass": "^0.2.1",
     "qs": "^6.7.0",
     "whatwg-fetch": "^3.2.0"

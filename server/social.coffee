@@ -288,7 +288,7 @@ module.exports = exports = (log, loga, argv) ->
     # Twitter Strategy
     if argv.twitter_consumerKey? and argv.twitter_consumerSecret?
       ids.push('twitter')
-      TwitterStrategy = require('passport-twitter').Strategy
+      TwitterStrategy = require('@passport-js/passport-twitter').Strategy
 
       twitterStrategyName = callbackHost + 'Twitter'
 

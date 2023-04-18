@@ -7,14 +7,11 @@
   "dependencies": {
     "@passport-js/passport-twitter": "^1.0.8",
     "coffeescript": "^2.4.1",
-    "es6-promise": "^4.2.8",
     "lodash": "^4.17.19",
     "passport": "^0.3.2",
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
-    "passport-oauth2": "^1.6.1",
-    "qs": "^6.7.0",
-    "whatwg-fetch": "^3.2.0"
+    "passport-oauth2": "^1.6.1"
   },
   "devDependencies": {
     "coffeeify": "^3.0.1",

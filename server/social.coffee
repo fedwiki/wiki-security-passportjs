@@ -11,7 +11,6 @@ fs = require 'fs'
 path = require 'path'
 
 https = require 'https'
-qs = require 'qs'
 
 url = require 'url'
 

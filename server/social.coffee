@@ -38,7 +38,6 @@ module.exports = exports = (log, loga, argv) ->
   statusDir = argv.status
 
   idFile = argv.id
-  usingPersona = false
 
   if argv.security_useHttps
     useHttps = true
@@ -56,26 +55,6 @@ module.exports = exports = (log, loga, argv) ->
 
   ids = []
 
-  # Mozilla Persona service closes on
-  personaEnd = new Date('2016-11-30')
-
-  watchForOwnerChange = ->
-    # we watch for owner changes, so we can update the information held here
-    fs.watch(idFile, (eventType, filename) ->
-      # re-read the owner file
-      fs.readFile(idFile, (err, data) ->
-        if err
-          console.log 'Error reading ', idFile, err
-          return
-        owner = JSON.parse(data)
-        usingPersona = false
-        if _.isEmpty(_.intersection(_.keys(owner), ids))
-          if _.has(owner, 'persona')
-            usingPersona = true
-        ownerName = owner.name
-      )
-    )
-
   #### Public stuff ####
 
   # Attempt to figure out if the wiki is claimed or not,
@@ -87,11 +66,6 @@ module.exports = exports = (log, loga, argv) ->
         fs.readFile(idFile, (err, data) ->
           if err then return cb err
           owner = JSON.parse(data)
-          # we only enable persona if it is the only owner information.
-          if _.isEmpty(_.intersection(_.keys(owner), ids))
-            if _.has(owner, 'persona')
-              usingPersona = true
-          watchForOwnerChange()
           cb())
       else
         owner = ''
@@ -112,7 +86,6 @@ module.exports = exports = (log, loga, argv) ->
           console.log "Claiming wiki #{wikiName} for #{id}"
           owner = id
           ownerName = owner.name
-          watchForOwnerChange()
           cb())
       else
         cb('Already Claimed')
@@ -140,11 +113,6 @@ module.exports = exports = (log, loga, argv) ->
               return true
             else
               return false
-          when 'persona'
-            if _.isEqual(owner[idProvider].email, req.session.passport.user[idProvider].email)
-              return true
-            else
-              return false
           else
             return false
       catch error
@@ -167,11 +135,6 @@ module.exports = exports = (log, loga, argv) ->
     switch idProvider
       when "github", "google", "twitter", 'oauth2'
         if _.isEqual(admin[idProvider], req.session.passport.user[idProvider].id)
-          return true
-        else
-          return false
-      when "persona"
-        if _.isEqual(admin[idProvider], req.session.passport.user[idProvider].email)
           return true
         else
           return false
@@ -323,24 +286,6 @@ module.exports = exports = (log, loga, argv) ->
           }
           cb(null, user)))
 
-    # Persona Strategy
-    PersonaStrategy = require('persona-pass').Strategy
-
-    personaAudience = callbackProtocol + '//' + callbackHost
-
-    personaStrategyName = callbackHost + 'Persona'
-
-    passport.use(personaStrategyName, new PersonaStrategy({
-      audience: personaAudience
-      }, (email, cb) ->
-        user = {
-          persona: {
-            email: email
-          }
-        }
-        cb(null, user)))
-
-
     app.use(passport.initialize())
     app.use(passport.session())
 
@@ -367,16 +312,11 @@ module.exports = exports = (log, loga, argv) ->
     app.get('/auth/google/callback',
       passport.authenticate(googleStrategyName, { prompt: 'select_account', successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
 
-    # Persona
-    app.post('/auth/browserid',
-      passport.authenticate(personaStrategyName, { successRedirect: '/auth/loginDone', failureRedirect: '/auth/loginDialog'}))
-
 
     app.get '/auth/client-settings.json', (req, res) ->
       # the client needs some information to configure itself
       settings = {
         useHttps: useHttps
-        usingPersona: usingPersona
       }
       if wikiHost
         settings.wikiHost = wikiHost
@@ -416,47 +356,6 @@ module.exports = exports = (log, loga, argv) ->
         schemes: schemeButtons
       }
       res.render(path.join(__dirname, '..', 'views', 'securityDialog.html'), info)
-
-    app.get '/auth/personaLogin', (req, res) ->
-      cookies = req.cookies
-      schemeButtons = []
-      if Date.now() < personaEnd
-        schemeButtons.push({
-          button: "<a href='#' id='browserid' class='scheme-button persona-button'><span>Persona</span></a>
-                   <script>
-                    $('#browserid').click(function(){
-                      navigator.id.get(function(assertion) {
-                        if (assertion) {
-                          $('input').val(assertion);
-                          $('form').submit();
-                        } else {
-                          location.reload();
-                        }
-                      });
-                    });
-                   </script>"})
-        info = {
-          wikiName: cookies['wikiName']
-          wikiHostName: if wikiHost
-            "part of " + req.hostname + " wiki farm"
-          else
-            "a federated wiki site"
-          title: "Federated Wiki: Site Owner Sign-on"
-          loginText: "Sign in to"
-          message: "Mozilla Persona closes on 30th November 2016. Wiki owners should add an alternative identity as soon as they are able."
-          schemes: schemeButtons
-        }
-      else
-        info = {
-          wikiName: cookies['wikiName']
-          wikiHostName: if wikiHost
-            "part of " + req.hostname + " wiki farm"
-          else
-            "a federated wiki site"
-          title: "Federated Wiki: Site Owner Sign-on"
-          message: "Mozilla Persona has now closed. Wiki owners will need to contact the Wiki Farm owner to re-claim their wiki."
-        }
-      res.render(path.join(__dirname, '..', 'views', 'personaDialog.html'), info)
 
     app.get '/auth/loginDone', (req, res) ->
       cookies = req.cookies
@@ -569,94 +468,12 @@ module.exports = exports = (log, loga, argv) ->
         console.log 'rejecting - not authorized', req.path
         res.sendStatus(403)
 
-    app.get '/auth/addAltAuth', authorized, (req, res) ->
-      # add alternative authorentication scheme - only makes sense if user owns this site
-      res.status(202).end()
-
-      user = req.session.passport.user
-
-      idProviders = _.keys(user)
-      userIds = {}
-      idProviders.forEach (idProvider) ->
-        id = switch idProvider
-          when "oauth2" then {
-            name: user.oauth2.displayName
-            oauth2: {
-              id: user.oauth2.id
-              username: user.oauth2.username
-            }
-          }
-          when "twitter" then {
-            name: user.twitter.displayName
-            twitter: {
-              id: user.twitter.id
-              username: user.twitter.username
-            }
-          }
-          when "github" then {
-            name: user.github.displayName
-            github: {
-              id: user.github.id
-              username: user.github.username
-              email: user.github.emails
-            }
-          }
-          when "google" then {
-            name: user.google.displayName
-            google: {
-              id: user.google.id
-              emails: user.google.emails
-            }
-          }
-          # only needed until persona closes
-          when "persona" then {
-            name: user.persona.email
-              .substr(0, user.persona.email.indexOf('@'))
-              .split('.')
-              .join(' ')
-              .toLowerCase()
-              .replace(/(^| )(\w)/g, (x) ->
-                return x.toUpperCase())
-            persona: {
-              email: user.persona.email
-            }
-          }
-        userIds = _.merge(userIds, id)
-
-      wikiDir = path.resolve(argv.data, '..')
-      statusDir = argv.status.split(path.sep).slice(-1)[0]
-      idFileName = path.parse(idFile).base
-
-      pattern = '*/' + statusDir + '/' + idFileName
-
-      glob(pattern, {cwd: wikiDir}, (err, files) ->
-        _.forEach files, (file) ->
-          # are we the owner?
-          fs.readFile(path.join(wikiDir, file), 'utf8', (err, data) ->
-            if err
-              console.log 'Error reading ', file, err
-              return
-            siteOwner = JSON.parse(data)
-
-            if _.intersectionWith(_.entries(siteOwner), _.entries(user), _.isEqual).length > 0
-              updateOwner = _.merge(user, siteOwner)
-              fs.writeFile(path.join(wikiDir, file), JSON.stringify(userIds), (err) ->
-                if err
-                  console.log 'Error writing ', file, err
-                # if the write works the change will be picked up by fs.watch() in watchForOwnerChange
-                # so there is nothing more to do here.
-              )
-          )
-        )
-
-
     app.get '/auth/claim-wiki', (req, res) ->
       if owner
         console.log 'Claim Request Ignored: Wiki already has owner - ', wikiName
         res.sendStatus(403)
       else
         user = req.session.passport.user
-        # there can be more than one id provider - initially only if we logged in with persona
         idProviders = _.keys(user)
 
         id = {}
@@ -689,19 +506,6 @@ module.exports = exports = (log, loga, argv) ->
               google: {
                 id: user.google.id
                 emails: user.google.emails
-              }
-            }
-            # only needed until persona closes
-            when "persona" then {
-              name: user.persona.email
-                .substr(0, user.persona.email.indexOf('@'))
-                .split('.')
-                .join(' ')
-                .toLowerCase()
-                .replace(/(^| )(\w)/g, (x) ->
-                  return x.toUpperCase())
-              persona: {
-                email: user.persona.email
               }
             }
 

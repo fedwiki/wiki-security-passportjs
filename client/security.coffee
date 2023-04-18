@@ -15,9 +15,6 @@
 
 settings = {}
 
-# Mozilla Persona service closes on
-personaEnd = new Date('2016-11-30')
-
 claim_wiki = () ->
   # we want to initiate a claim on a wiki
   #
@@ -82,53 +79,6 @@ update_footer = (ownerName, isAuthenticated) ->
       $('footer > #security > #claim').click (e) ->
         e.preventDefault()
         claim_wiki()
-    else
-      # only offer to add alternative id if using persona - at least initially.
-      if settings.usingPersona
-        $('footer > #security').append "<a href='#' id='addAltAuth' class='foot-item' title='Add Alternative Credentials'><i class='fa fa-user-plus fa-lg fa-fw'></i></a>"
-        $('footer > #security > #addAltAuth').click (e) ->
-          e.preventDefault
-
-          document.cookie = "wikiName=#{window.location.host}" + ";domain=.#{settings.cookieDomain}; path=/; max-age=300; sameSite=Strict;"
-
-          w = WinChan.open({
-            url: settings.dialogAddAltURL
-            relay_url: settings.relayURL
-            window_features: "menubar=0, location=0, resizable=0, scrollbars=1, status=0, dialog=1, width=700, height=375"
-            params: {}
-            }, (err, r) ->
-              if err
-                console.log err
-              else
-                # add call to add alternative to owner here
-                console.log 'send request to add owner identity'
-                myInit = {
-                  method: 'GET'
-                  cache: 'no-cache'
-                  mode: 'same-origin'
-                  credentials: 'include'
-                }
-                fetch '/auth/addAltAuth', myInit
-                .then (response) ->
-                  if response.ok
-                    console.log 'Alternative Identity added', response
-                    settings.usingPersona = false
-                    if settings.wikiHost
-                      dialogHost = settings.wikiHost
-                    else
-                      dialogHost = window.location.hostname
-                    settings.cookieDomain = dialogHost
-                    if settings.useHttps
-                      dialogProtocol = 'https:'
-                    else
-                      dialogProtocol = window.location.protocol
-                      if window.location.port
-                        dialogHost = dialogHost + ':' + window.location.port
-                    settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/loginDialog'
-                    update_footer ownerName, isAuthenticated
-                  else
-                    console.log 'Attempt to claim site failed', response
-                )
   else
     if !isClaimed
       signonTitle = 'Claim this Wiki'
@@ -220,10 +170,7 @@ setup = (user) ->
             dialogProtocol = window.location.protocol
             if window.location.port
               dialogHost = dialogHost + ':' + window.location.port
-          if settings.usingPersona
-            settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/personaLogin'
-          else
-            settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/loginDialog'
+          settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/loginDialog'
           settings.relayURL = dialogProtocol + '//' + dialogHost + '/auth/relay.html'
           settings.dialogAddAltURL = dialogProtocol + '//' + dialogHost + '/auth/addAuthDialog'
 

@@ -13,7 +13,6 @@
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
     "passport-oauth2": "^1.6.1",
-    "persona-pass": "^0.2.1",
     "qs": "^6.7.0",
     "whatwg-fetch": "^3.2.0"
   },

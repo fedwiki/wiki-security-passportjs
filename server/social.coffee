@@ -82,7 +82,7 @@ module.exports = exports = (log, loga, argv) ->
       if !exists
         fs.writeFile(idFile, JSON.stringify(id), (err) ->
           if err then return cb err
-          console.log "Claiming wiki #{wikiName} for #{id}"
+          console.log "Claiming wiki #{wikiName} for #{id.name}"
           owner = id
           ownerName = owner.name
           cb())

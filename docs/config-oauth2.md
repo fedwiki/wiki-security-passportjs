@@ -35,6 +35,7 @@ Sometimes, you'll be able to look up the URLs by visiting your provider's
 ```JSON
 {
   "farm": true,
+  "admin": {"oauth2": "ID VALUE FROM OWNER.JSON FILE OF ADMIN"},
   "security_type": "passportjs",
   "oauth2_clientID": "CLIENT ID",
   "oauth2_clientSecret": "CLIENT SECRET",
@@ -48,6 +49,7 @@ Sometimes, you'll be able to look up the URLs by visiting your provider's
 ```JSON
 {
   "farm": true,
+  "admin": {"oauth2": "ID VALUE FROM OWNER.JSON FILE OF ADMIN"},
   "security_type": "passportjs",
   "oauth2_clientID": "CLIENT ID",
   "oauth2_clientSecret": "CLIENT SECRET",

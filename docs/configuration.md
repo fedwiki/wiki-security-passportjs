@@ -9,7 +9,7 @@ Configuration of Passport security plug-ins is a two stage process:
 
 The legacy Mozilla Persona Passport plug-in does not require any configuration.
 
-This plug-in comes with support for using GitHub, Google, and Twitter. Although the configuration process is broadly the same for each of these, there are some slight differences.
+This plug-in comes with support for using GitHub, Google, Twitter, and generic OAuth. Although the configuration process is broadly the same for each of these, there are some slight differences.
 
 As a wiki server owner you need to pick one, or more, of these that you want to use.
 

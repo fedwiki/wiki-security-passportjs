@@ -56,7 +56,7 @@ update_footer = (ownerName, isAuthenticated) ->
       logoutTitle = "Not Owner : Sign-out"
       logoutIconClass = 'fa fa-lock fa-lg fa-fw notOwner'
     $('footer > #security').append "<a href='#' id='logout' class='footer-item' title='#{logoutTitle}'><i class='#{logoutIconClass}'></i></a>"
-    $('footer > #security > #logout').click (e) ->
+    $('footer > #security > #logout').on 'click', (e) ->
       e.preventDefault()
       myInit = {
         method: 'GET'
@@ -76,7 +76,7 @@ update_footer = (ownerName, isAuthenticated) ->
     # These probably should move into a menu, but this is far easier to begin with
     if !isClaimed
       $('footer > #security').append "<a href='#' id='claim' class='foot-item' title='Claim this Wiki'><i class='fa fa-key fa-lg fa-fw'></i></a>"
-      $('footer > #security > #claim').click (e) ->
+      $('footer > #security > #claim').on 'click', (e) ->
         e.preventDefault()
         claim_wiki()
   else
@@ -85,7 +85,7 @@ update_footer = (ownerName, isAuthenticated) ->
     else
       signonTitle = 'Wiki Owner Sign-on'
     $('footer > #security').append "<a href='#' id='show-security-dialog' class='footer-item' title='#{signonTitle}'><i class='fa fa-lock fa-lg fa-fw'></i></a>"
-    $('footer > #security > #show-security-dialog').click (e) ->
+    $('footer > #security > #show-security-dialog').on 'click', (e) ->
       e.preventDefault()
 
       document.cookie = "wikiName=#{window.location.host}" + ";domain=.#{settings.cookieDomain}; path=/; max-age=300; sameSite=Strict;"

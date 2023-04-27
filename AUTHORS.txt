@@ -5,3 +5,4 @@ Ward Cunningham <ward@c2.com>
 Marc-Antoine Parent <maparent@acm.org>
 Ian Goodacre <Ian.Goodacre@entrain.nz>
 3wc <3wc.github@doesthisthing.work>
+Robert Best <chessscholar@gmail.com>

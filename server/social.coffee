@@ -400,9 +400,9 @@ module.exports = exports = (log, loga, argv) ->
         false
 
       app.all '*', (req, res, next) ->
-        # everything is restricted except site flag,
+        # don't protect site flag,
         return next() if req.url is '/favicon.png'
-        return next() unless /\.(json|html)$/.test req.url or req.url.startsWith('/assets')
+        return next() unless /\.(json|html)$/.test req.url
 
         # prepare to examine remote server's forwarded session
         res.header 'Access-Control-Allow-Origin', req.get('Origin')||'*'

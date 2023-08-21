@@ -31,10 +31,13 @@ claim_wiki = () ->
     .then (response) ->
       if response.ok
         response.json().then (json) ->
-          ownerName = json.ownerName
-          window.isClaimed = true
-          window.isOwner = true
-          update_footer ownerName, true
+          if wiki.lineup.bestTitle() is 'Login Required'
+            location.reload()
+          else
+            ownerName = json.ownerName
+            window.isClaimed = true
+            window.isOwner = true
+            update_footer ownerName, true
       else
         console.log 'Attempt to claim site failed', response
 
@@ -103,7 +106,10 @@ update_footer = (ownerName, isAuthenticated) ->
             if !isClaimed
               claim_wiki()
             else
-              update_footer ownerName, true)
+              if wiki.lineup.bestTitle() is 'Login Required'
+                location.reload()
+              else
+                update_footer ownerName, true)
 
 
 
@@ -165,8 +171,6 @@ setup = (user) ->
         settings.dialogURL = dialogProtocol + '//' + dialogHost + '/auth/loginDialog'
         settings.relayURL = dialogProtocol + '//' + dialogHost + '/auth/relay.html'
         settings.dialogAddAltURL = dialogProtocol + '//' + dialogHost + '/auth/addAuthDialog'
-
-
         update_footer ownerName, isAuthenticated
     else
       console.log 'Unable to fetch client settings: ', response

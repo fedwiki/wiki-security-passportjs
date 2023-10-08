@@ -1,6 +1,6 @@
 {
   "name": "wiki-security-passportjs",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "Security plugin for Federated Wiki, using passport.js",
   "author": "Paul Rodwell <paul.rodwell@btinternet.com> (http://rodwell.me)",
   "license": "MIT",

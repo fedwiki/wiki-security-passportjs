@@ -408,7 +408,7 @@ module.exports = exports = (log, loga, argv) ->
         res.header 'Access-Control-Allow-Origin', req.get('Origin')||'*'
         res.header 'Access-Control-Allow-Credentials', 'true'
         # protect unclaimed by adding "add owner isnt ''" - maybe via parameter
-        return next() if (isAuthorized(req) and owner !== '') or allowedToView(req)
+        return next() if (isAuthorized(req) and (owner isnt '')) or allowedToView(req)
         return res.redirect("/view/#{m[1]}") if m = req.url.match /\/(.*)\.html/
         return res.json(['Login Required']) if req.url == '/system/sitemap.json'
 

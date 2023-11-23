@@ -28,7 +28,6 @@ module.exports = exports = (log, loga, argv) ->
 
   owner = ''
   ownerName = ''
-  user = {}
   wikiName = argv.url
   wikiHost = argv.wiki_domain
 
@@ -215,10 +214,12 @@ module.exports = exports = (log, loga, argv) ->
             username_query = 'params.user_id'
 
           try
-            user.oauth2 = {
-              id: extractUserInfo(argv.oauth2_IdField, 'params.user_id')
-              username: extractUserInfo(argv.oauth2_UsernameField, 'params.user_id')
-              displayName: extractUserInfo(argv.oauth2_DisplayNameField, 'params.user_id')
+            user = {
+              oauth2: {
+                id: extractUserInfo(argv.oauth2_IdField, 'params.user_id')
+                username: extractUserInfo(argv.oauth2_UsernameField, 'params.user_id')
+                displayName: extractUserInfo(argv.oauth2_DisplayNameField, 'params.user_id')
+              }
             }
           catch e
             console.error('*** Error extracting user info:', e)
@@ -239,11 +240,13 @@ module.exports = exports = (log, loga, argv) ->
         # callbackURL is optional, and if it exists must match that given in
         # the OAuth application settings - so we don't specify it.
         }, (accessToken, refreshToken, profile, cb) ->
-          user.github = {
-            id: profile.id
-            username: profile.username
-            displayName: profile.displayName
-            emails: profile.emails
+          user = {
+            github: {
+              id: profile.id
+              username: profile.username
+              displayName: profile.displayName
+              emails: profile.emails
+            }
           }
           cb(null, user)))
 
@@ -259,10 +262,12 @@ module.exports = exports = (log, loga, argv) ->
         consumerSecret: argv.twitter_consumerSecret
         callbackURL: callbackProtocol + '//' + callbackHost + '/auth/twitter/callback'
         }, (accessToken, refreshToken, profile, cb) ->
-          user.twitter = {
-            id: profile.id
-            username: profile.username
-            displayName: profile.displayName
+          user = {
+            twitter: {
+              id: profile.id
+              username: profile.username
+              displayName: profile.displayName
+            }
           }
           cb(null, user)))
 
@@ -278,11 +283,12 @@ module.exports = exports = (log, loga, argv) ->
         clientSecret: argv.google_clientSecret
         callbackURL: callbackProtocol + '//' + callbackHost + '/auth/google/callback'
         }, (accessToken, refreshToken, profile, cb) ->
-          user.google = {
+          user = { google: { 
             id: profile.id
             displayName: profile.displayName
             emails: profile.emails
-          }
+            }
+            }
           cb(null, user)))
 
     app.use(passport.initialize())
@@ -535,7 +541,7 @@ module.exports = exports = (log, loga, argv) ->
 
     app.get '/logout', (req, res) ->
       console.log 'Logout...'
-      req.logout()
+      req.session.reset()
       res.send("OK")
 
   security

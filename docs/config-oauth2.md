@@ -21,6 +21,8 @@ specify it with `oauth2_CallbackURL`.
 
 You might also need to tell Federated Wiki how to look up usernames:
 * `oauth2_UserInfoURL` -- from login provider's documentation
+  * If this endpoint expects an HTTP Authorization header (instead of
+    a token in the query string) set `oauth2_UseHeader` to `true`.
 * `oauth2_IdField`, `oauth2_DisplayNameField`, `oauth2_UsernameField` -- starting with 
   * `params` for information returned in the original token request, or
   * `profile` for data returned from `oauth2_UserInfoURL`, if you provided it.

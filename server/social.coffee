@@ -385,18 +385,10 @@ module.exports = exports = (log, loga, argv) ->
     # see http://ward.asia.wiki.org/login-to-view.html
 
     if argv.restricted?
-
       allowedToView = (req) ->
         if argv.allowed_domains?
-          if Array.isArray(argv.allowed_domains)
-            allowed_domains = argv.allowed_domains
-          else
-            # accommodate copy bug to be fixed soon
-            # https://github.com/fedwiki/wiki/blob/4c6eee69e78c1ba3f3fc8d61f4450f70afb78f10/farm.coffee#L98-L103
-            for k, v of argv.allowed_domains
-              allowed_domains.push v
           try
-            # emails = [ { value: 'ward.cunningham@gmail.com', type: 'account' } ]
+            allowed_domains = argv.allowed_domains
             emails = req.session.passport.user.google.emails
             for entry in emails
               have = entry.value.split('@')[1]
@@ -405,18 +397,13 @@ module.exports = exports = (log, loga, argv) ->
           catch error
             return false
         if argv.allowed_usernames?
-          if Array.isArray(argv.allowed_usernames)
-            allowed_usernames = argv.allowed_usernames
-          else
-            # accommodate copy bug to be fixed soon
-            # https://github.com/fedwiki/wiki/blob/4c6eee69e78c1ba3f3fc8d61f4450f70afb78f10/farm.coffee#L98-L103
-            for k, v of argv.allowed_usernames
-              allowed_usernames.push
           try
+            allowed_usernames = argv.allowed_usernames
             idProvider = _.head(_.keys(req.session.passport.user))
             switch idProvider
               when 'github', 'twitter', 'oauth2'
                 username = req.session.passport.user[idProvider].username
+                return true if (allowed_usernames.length == 1 and allowed_usernames[0] == "*")
                 for want in allowed_usernames
                   return true if want == username
           catch error

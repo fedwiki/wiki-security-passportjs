@@ -395,7 +395,7 @@ module.exports = exports = (log, loga, argv) ->
               for want in allowed_domains
                 return true if want == have
           catch error
-            console.log "argv.allowed_domains exists, but there was an error"
+            console.log "argv.allowed_domains exists, but there was an error. Make sure it's value is an array in your config."
         if argv.allowed_usernames?
           try
             allowed_usernames = argv.allowed_usernames
@@ -407,7 +407,7 @@ module.exports = exports = (log, loga, argv) ->
                 for want in allowed_usernames
                   return true if want == username
           catch error
-            console.log "argv.allowed_usernames exists, but there was an error"
+            console.log "argv.allowed_usernames exists, but there was an error. Make sure it's value is an array in your config."
         false
 
       app.all '*', (req, res, next) ->

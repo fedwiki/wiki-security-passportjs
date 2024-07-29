@@ -5,7 +5,7 @@ Before attempting to configure Login to View, make sure you have already taken t
 
 Where you put your configuration for the Login to View system depends on which sites on your farm you want to be restricted.  If you want the whole farm to be restricted then you would add the key-value pairs into the top level of your wiki's `config.json`. If you only want to restrict specific sites on your farm, then you need to restrict them individually within a wikiDomains section of your config.
 
-The properties we need to add for Login to View are: `restricted`, `details`, and either `allowed_domains` (Google) or `allowed_usernames`  (GitHub, Twitter, OAuth2) depending on your identity provider.
+The properties we need to add for Login to View are: `restricted`, `details`, and either `allowed_domains` (Google) or `allowed_ids`  (GitHub, Twitter, OAuth2) depending on your identity provider.
 
 **Examples:**
 
@@ -59,7 +59,7 @@ If your identity provider is **GitHub**, **Twitter**, or generic **OAuth2**:
         "oauth2_UsernameField": "token.preferred_username",
         "restricted": true,
         "details": "http://path.ward.asia.wiki.org/login-to-view.html",
-        "allowed_usernames": ["*"]
+        "allowed_ids": ["*"]
       }
     }
   }

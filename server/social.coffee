@@ -395,19 +395,21 @@ module.exports = exports = (log, loga, argv) ->
               for want in allowed_domains
                 return true if want == have
           catch error
-            console.log "argv.allowed_domains exists, but there was an error. Make sure it's value is an array in your config."
-        if argv.allowed_usernames?
+            if emails?
+              console.log "argv.allowed_domains exists, but there was an error. Make sure it's value is an array in your config."
+        if argv.allowed_ids?
           try
-            allowed_usernames = argv.allowed_usernames
+            allowed_ids = argv.allowed_ids
             idProvider = _.head(_.keys(req.session.passport.user))
             switch idProvider
               when 'github', 'twitter', 'oauth2'
-                username = req.session.passport.user[idProvider].username
-                return true if (allowed_usernames.length == 1 and allowed_usernames[0] == "*")
-                for want in allowed_usernames
-                  return true if want == username
+                id = req.session.passport.user[idProvider].id
+                return true if (allowed_ids.length == 1 and allowed_ids[0] == "*")
+                for want in allowed_ids
+                  return true if want == id
           catch error
-            console.log "argv.allowed_usernames exists, but there was an error. Make sure it's value is an array in your config."
+            if idProvider?
+              console.log "argv.allowed_ids exists, but there was an error. Make sure it's value is an array in your config."
         false
 
       app.all '*', (req, res, next) ->

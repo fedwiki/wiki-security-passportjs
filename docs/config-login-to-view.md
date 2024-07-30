@@ -27,11 +27,8 @@ If your identity provider is **Google**:
       "restricted": true,
       "details": "http://path.ward.asia.wiki.org/login-to-view.html",
       "allowed_domains": [
-        "c2.com",
-        "ustawimovement.global",
-        "catalystlearninglabs.org",
-        "robert.best",
-                "wiki.cafe"
+        "example1.com",
+        "example2.com"
       ]
     }
   }

@@ -13,6 +13,8 @@
 
 ###
 
+WinChan = require('./winchan.js')
+
 settings = {}
 
 claim_wiki = () ->
@@ -143,7 +145,6 @@ setup = (user) ->
       lastCookie = currentCookie
   , 100
 
-  wiki.getScript '/security/winchan.js'
   if (!$("link[href='/security/style.css']").length)
     $('<link rel="stylesheet" href="/security/style.css">').appendTo("head")
   myInit = {

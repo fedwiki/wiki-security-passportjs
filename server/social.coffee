@@ -15,7 +15,6 @@ https = require 'https'
 url = require 'url'
 
 _ = require 'lodash'
-glob = require 'glob'
 
 passport = require('passport')
 
@@ -166,7 +165,8 @@ module.exports = exports = (log, loga, argv) ->
         OAuth2Strategy::userProfile = (accesstoken, done) -> 
           console.log "hello"
           console.log accesstoken
-          @_oauth2._request "GET", argv.oauth2_UserInfoURL, null, null, accesstoken, (err, data) ->
+          @_oauth2.useAuthorizationHeaderforGET argv.oauth2_UseHeader?
+          @_oauth2.get argv.oauth2_UserInfoURL, accesstoken, (err, data) ->
             if err
               return done err 
             try

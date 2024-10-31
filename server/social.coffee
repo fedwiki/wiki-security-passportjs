@@ -50,8 +50,6 @@ module.exports = exports = (log, loga, argv) ->
       callbackHost = callbackHost + ":" + url.parse(argv.url).port
   else
     callbackHost = url.parse(argv.url).host
-    if argv.oauth2_CallbackPort?
-      callbackHost = callbackHost + ":" + argv.oauth2_CallbackPort
 
   console.log "callbackHost", callbackHost
 

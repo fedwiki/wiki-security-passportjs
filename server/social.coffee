@@ -226,10 +226,9 @@ module.exports = exports = (log, loga, argv) ->
                 displayName: extractUserInfo(argv.oauth2_DisplayNameField, 'params.user_id')
               }
             }
+            cb(null, user)))
           catch e
             console.error('*** Error extracting user info:', e)
-          console.log user.oauth2
-          cb(null, user)))
 
     # Github Strategy
     if argv.github_clientID? and argv.github_clientSecret?

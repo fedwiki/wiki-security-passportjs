@@ -17,8 +17,6 @@ url = require 'url'
 _ = require 'lodash'
 glob = require 'glob'
 
-{ jwtDecode } = require('jwt-decode');
-
 passport = require('passport')
 
 # Export a function that generates security handler
@@ -52,6 +50,10 @@ module.exports = exports = (log, loga, argv) ->
       callbackHost = callbackHost + ":" + url.parse(argv.url).port
   else
     callbackHost = url.parse(argv.url).host
+    if argv.oauth2_CallbackPort?
+      callbackHost = callbackHost + ":" + argv.oauth2_CallbackPort
+
+  console.log "callbackHost", callbackHost
 
   ids = []
 
@@ -133,7 +135,7 @@ module.exports = exports = (log, loga, argv) ->
       return false
 
     switch idProvider
-      when "github", "google", "twitter", 'oauth2'
+      when "github", "google", "twitter", "oauth2"
         if _.isEqual(admin[idProvider], req.session.passport.user[idProvider].id)
           return true
         else
@@ -163,10 +165,13 @@ module.exports = exports = (log, loga, argv) ->
       OAuth2Strategy = require('passport-oauth2').Strategy
 
       oauth2StrategyName = callbackHost + 'OAuth'
+      console.log "callbackHost", callbackHost
 
       if argv.oauth2_UserInfoURL?
         OAuth2Strategy::userProfile = (accesstoken, done) -> 
           @_oauth2._request "GET", argv.oauth2_UserInfoURL, null, null, accesstoken, (err, data) ->
+            console.log "data", data
+            console.log "err", err
             if err
               return done err 
             try
@@ -185,8 +190,6 @@ module.exports = exports = (log, loga, argv) ->
         userInfoURL: argv.oauth2_UserInfoURL
         }, (accessToken, refreshToken, params, profile, cb) ->
 
-          token = jwtDecode(accessToken)
-
           extractUserInfo = (uiParam, uiDef) ->
             uiPath = ''
             if typeof uiParam == 'undefined' then (uiPath = uiDef) else (uiPath = uiParam)
@@ -194,8 +197,6 @@ module.exports = exports = (log, loga, argv) ->
             sParts = uiPath.split('.')
             sFrom = sParts.shift()
             switch sFrom
-              when "token"
-                obj = token
               when "params"
                 obj = params
               when "profile"
@@ -208,6 +209,10 @@ module.exports = exports = (log, loga, argv) ->
               obj = obj[sParts.shift()]
             return obj
 
+          console.log("accessToken", accessToken)
+          console.log("refreshToken", refreshToken)
+          console.log("params", params)
+          console.log("profile", profile)
           if argv.oauth2_UsernameField?
             username_query = argv.oauth2_UsernameField 
           else 

@@ -336,7 +336,14 @@ module.exports = exports = (log, loga, argv) ->
       schemeButtons = []
       _(ids).forEach (scheme) ->
         switch scheme
-          when "oauth2" then schemeButtons.push({button: "<a href='/auth/oauth2' class='scheme-button oauth2-button'><span>OAuth2</span></a>"})
+          when "oauth2"
+            schemeButtons.push({button: "<a href='/auth/oauth2' id='oauth2' class='scheme-button oauth2-button'><span>OAuth2</span></a>
+              <script>
+                oauth2Button = document.getElementById('oauth2');
+                oauth2Button.onclick = function(event) {
+                  window.resizeBy(0, +300);
+                }
+              </script>"})
           when "twitter" then schemeButtons.push({button: "<a href='/auth/twitter' class='scheme-button twitter-button'><span>Twitter</span></a>"})
           when "github" then schemeButtons.push({button: "<a href='/auth/github' class='scheme-button github-button'><span>Github</span></a>"})
           when "google"

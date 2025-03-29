@@ -17,6 +17,8 @@ url = require 'url'
 _ = require 'lodash'
 glob = require 'glob'
 
+{ jwtDecode } = require('jwt-decode');
+
 passport = require('passport')
 
 # Export a function that generates security handler
@@ -164,8 +166,6 @@ module.exports = exports = (log, loga, argv) ->
 
       if argv.oauth2_UserInfoURL?
         OAuth2Strategy::userProfile = (accesstoken, done) -> 
-          console.log "hello"
-          console.log accesstoken
           @_oauth2._request "GET", argv.oauth2_UserInfoURL, null, null, accesstoken, (err, data) ->
             if err
               return done err 
@@ -185,6 +185,8 @@ module.exports = exports = (log, loga, argv) ->
         userInfoURL: argv.oauth2_UserInfoURL
         }, (accessToken, refreshToken, params, profile, cb) ->
 
+          token = jwtDecode(accessToken)
+
           extractUserInfo = (uiParam, uiDef) ->
             uiPath = ''
             if typeof uiParam == 'undefined' then (uiPath = uiDef) else (uiPath = uiParam)
@@ -192,6 +194,8 @@ module.exports = exports = (log, loga, argv) ->
             sParts = uiPath.split('.')
             sFrom = sParts.shift()
             switch sFrom
+              when "token"
+                obj = token
               when "params"
                 obj = params
               when "profile"
@@ -204,10 +208,6 @@ module.exports = exports = (log, loga, argv) ->
               obj = obj[sParts.shift()]
             return obj
 
-          console.log("accessToken", accessToken)
-          console.log("refreshToken", refreshToken)
-          console.log("params", params)
-          console.log("profile", profile)
           if argv.oauth2_UsernameField?
             username_query = argv.oauth2_UsernameField 
           else 
@@ -336,7 +336,14 @@ module.exports = exports = (log, loga, argv) ->
       schemeButtons = []
       _(ids).forEach (scheme) ->
         switch scheme
-          when "oauth2" then schemeButtons.push({button: "<a href='/auth/oauth2' class='scheme-button oauth2-button'><span>OAuth2</span></a>"})
+          when "oauth2"
+            schemeButtons.push({button: "<a href='/auth/oauth2' id='oauth2' class='scheme-button oauth2-button'><span>OAuth2</span></a>
+              <script>
+                oauth2Button = document.getElementById('oauth2');
+                oauth2Button.onclick = function(event) {
+                  window.resizeBy(0, +300);
+                }
+              </script>"})
           when "twitter" then schemeButtons.push({button: "<a href='/auth/twitter' class='scheme-button twitter-button'><span>Twitter</span></a>"})
           when "github" then schemeButtons.push({button: "<a href='/auth/github' class='scheme-button github-button'><span>Github</span></a>"})
           when "google"
@@ -385,24 +392,31 @@ module.exports = exports = (log, loga, argv) ->
     # see http://ward.asia.wiki.org/login-to-view.html
 
     if argv.restricted?
-
       allowedToView = (req) ->
-        allowed = []
         if argv.allowed_domains?
-          if Array.isArray(argv.allowed_domains)
-            allowed = argv.allowed_domains
-          else
-            # accommodate copy bug to be fixed soon
-            # https://github.com/fedwiki/wiki/blob/4c6eee69e78c1ba3f3fc8d61f4450f70afb78f10/farm.coffee#L98-L103
-            for k, v of argv.allowed_domains
-              allowed.push v
-        # emails = [ { value: 'ward.cunningham@gmail.com', type: 'account' } ]
-        emails = req.session?.passport?.user?.google?.emails
-        return false unless emails
-        for entry in emails
-          have = entry.value.split('@')[1]
-          for want in allowed
-            return true if want == have
+          try
+            allowed_domains = argv.allowed_domains
+            emails = req.session.passport.user.google.emails
+            for entry in emails
+              have = entry.value.split('@')[1]
+              for want in allowed_domains
+                return true if want == have
+          catch error
+            if emails?
+              console.log "argv.allowed_domains exists, but there was an error. Make sure it's value is an array in your config."
+        if argv.allowed_ids?
+          try
+            allowed_ids = argv.allowed_ids
+            idProvider = _.head(_.keys(req.session.passport.user))
+            switch idProvider
+              when 'github', 'twitter', 'oauth2'
+                id = req.session.passport.user[idProvider].id
+                return true if (allowed_ids.length == 1 and allowed_ids[0] == "*")
+                for want in allowed_ids
+                  return true if want == id
+          catch error
+            if idProvider?
+              console.log "argv.allowed_ids exists, but there was an error. Make sure it's value is an array in your config."
         false
 
       app.all '*', (req, res, next) ->

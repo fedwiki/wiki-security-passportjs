@@ -48,8 +48,9 @@ module.exports = exports = (log, loga, argv) ->
 
   if wikiHost
     callbackHost = wikiHost
-    if url.parse(argv.url).port
-      callbackHost = callbackHost + ":" + url.parse(argv.url).port
+    # In farm mode, argv.url loses port info, so use argv.port directly
+    if argv.port and argv.port != 80
+      callbackHost = callbackHost + ":" + argv.port
   else
     callbackHost = url.parse(argv.url).host
 

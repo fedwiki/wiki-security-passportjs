@@ -15,7 +15,6 @@ https = require 'https'
 url = require 'url'
 
 _ = require 'lodash'
-glob = require 'glob'
 
 { jwtDecode } = require('jwt-decode');
 
@@ -165,12 +164,12 @@ module.exports = exports = (log, loga, argv) ->
       oauth2StrategyName = callbackHost + 'OAuth'
 
       if argv.oauth2_UserInfoURL?
-        OAuth2Strategy::userProfile = (accesstoken, done) -> 
+        OAuth2Strategy::userProfile = (accesstoken, done) ->
           @_oauth2._request "GET", argv.oauth2_UserInfoURL, null, null, accesstoken, (err, data) ->
             if err
-              return done err 
+              return done err
             try
-              data = JSON.parse data 
+              data = JSON.parse data
             catch e
               return done e
             done(null, data)
@@ -203,14 +202,14 @@ module.exports = exports = (log, loga, argv) ->
               else
                 console.error('*** source of user info not recognised', uiPath)
                 obj = {}
-            
+
             while (sParts.length)
               obj = obj[sParts.shift()]
             return obj
 
           if argv.oauth2_UsernameField?
-            username_query = argv.oauth2_UsernameField 
-          else 
+            username_query = argv.oauth2_UsernameField
+          else
             username_query = 'params.user_id'
 
           try
@@ -283,7 +282,7 @@ module.exports = exports = (log, loga, argv) ->
         clientSecret: argv.google_clientSecret
         callbackURL: callbackProtocol + '//' + callbackHost + '/auth/google/callback'
         }, (accessToken, refreshToken, profile, cb) ->
-          user = { google: { 
+          user = { google: {
             id: profile.id
             displayName: profile.displayName
             emails: profile.emails

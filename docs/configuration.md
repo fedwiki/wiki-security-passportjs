@@ -18,3 +18,6 @@ See, depending on which identity provider you choose to use:
 * [Google](./config-google.md)
 * [Twitter](./config-twitter.md)
 * [Generic OAuth](./config-oauth2.md)
+
+With all of the providers above you are also able to configure sites on your farm to be [Login to View](http://ward.asia.wiki.org/login-to-view.html). This means only specified visitors are allowed to view the site's content, rather than it being public on the web. The following page explains how to configure the login-to-view system:
+* [Configure Login to View](./config-login-to-view.md)

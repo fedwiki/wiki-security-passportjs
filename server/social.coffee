@@ -20,6 +20,8 @@ _ = require 'lodash'
 
 passport = require('passport')
 
+{ create } = require('express-handlebars')
+
 # Export a function that generates security handler
 # when called with options object.
 module.exports = exports = (log, loga, argv) ->
@@ -150,6 +152,10 @@ module.exports = exports = (log, loga, argv) ->
 
   security.defineRoutes = (app, cors, updateOwner) ->
 
+    hbs = create({
+      extname: '.html'
+      layoutsDir: path.join(__dirname, '..', 'views')
+      defaultLayout: 'securityDialog'})
     passport.serializeUser = (user, req, done) ->
       done(null, user)
 
@@ -366,7 +372,7 @@ module.exports = exports = (log, loga, argv) ->
         loginText: "Sign in to"
         schemes: schemeButtons
       }
-      res.render(path.join(__dirname, '..', 'views', 'securityDialog.html'), info)
+      hbs.render(path.join(__dirname, '..', 'views', 'securityDialog.html'), info).then((rendered) => res.send(rendered))
 
     app.get '/auth/loginDone', (req, res) ->
       cookies = req.cookies
@@ -384,7 +390,7 @@ module.exports = exports = (log, loga, argv) ->
         owner: getOwner
         authMessage: "You are now logged in<br>If this window hasn't closed, you can close it."
       }
-      res.render(path.join(__dirname, '..', 'views', 'done.html'), info)
+      hbs.render(path.join(__dirname, '..', 'views', 'done.html'), info).then((rendered) => res.send(rendered))
 
 
     # if configured, enforce restricted access to json
@@ -475,7 +481,7 @@ module.exports = exports = (log, loga, argv) ->
           title: "Federated Wiki: Add Alternative Authentication Scheme"
           schemes: schemeButtons
         }
-        res.render(path.join(__dirname, '..', 'views', 'addAlternativeDialog.html'), info)
+        hbs.render(path.join(__dirname, '..', 'views', 'addAlternativeDialog.html'), info).then((rendered) => res.send(rendered))
 
       else
         # user is not authenticated

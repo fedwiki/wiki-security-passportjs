@@ -49,7 +49,7 @@ update_footer = (ownerName, isAuthenticated) ->
   # populate the security dialog
 
   if ownerName
-    $('footer > #site-owner').html("Site Owned by: <span id='site-owner' style='text-transform:capitalize;'>#{ownerName}</span>")
+    $('footer > #site-owner').html("Wiki by: <span id='site-owner'>#{ownerName}</span>")
 
   $('footer > #security').empty()
 

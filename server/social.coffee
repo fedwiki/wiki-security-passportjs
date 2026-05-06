@@ -66,7 +66,11 @@ module.exports = exports = (log, loga, argv) ->
       if exists
         fs.readFile(idFile, (err, data) ->
           if err then return cb err
-          owner = JSON.parse(data)
+          try
+            owner = JSON.parse(data)
+          catch error
+            console.error "Error parsing owner file #{idFile}", error.message
+            owner = { name: 'unparsable' }
           cb())
       else
         owner = ''

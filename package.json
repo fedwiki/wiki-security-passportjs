@@ -19,7 +19,6 @@
     "coffeeify": "^3.0.1",
     "grunt": "^1.2.1",
     "grunt-browserify": "^6.0.0",
-    "grunt-contrib-watch": "^1.0.0",
     "grunt-git-authors": "^3.2.0"
   },
   "repository": {

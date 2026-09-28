@@ -1,3 +1,6 @@
+> [!NOTE]
+> With the release of [wiki-security-social](https://github.com/fedwiki/wiki-security-social) this security plugin will be retired soon.
+
 # Federated Wiki - Security Plug-in: Passport
 
 This security plug-in is written as a replacement for the Mozilla Persona plugin (wiki-security-persona). A replacement is required because the Mozilla Persona service is closing on 30th November 2016.

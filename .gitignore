@@ -2,6 +2,7 @@ node_modules
 *.log
 /client/*.js
 /client/*.map
+/cve-report
 
 # don't ignore winchan.js and modernizr-custom.js
 !/client/winchan.js
